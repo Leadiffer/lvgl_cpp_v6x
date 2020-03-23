@@ -37,7 +37,7 @@ public:
      * @param font pointer to a font (NULL to use the default)
      * @return pointer to the initialized theme
      */
-    static LVThemeNemo * init(uint16_t hue, lv_font_t * font)
+    static LVThemeNemo * init(uint16_t hue, lv_font_t * font = nullptr)
     {
         return (LVThemeNemo *)lv_theme_nemo_init(hue,font);
     }

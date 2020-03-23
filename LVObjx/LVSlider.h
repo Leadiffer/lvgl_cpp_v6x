@@ -25,7 +25,6 @@
 /*Data of slider*/
 class LVSlider
         : public LVObject
-        , public LVFakeMemHeader<lv_slider_ext_t>
         , public lv_slider_ext_t
 {
     LV_OBJECT(LVSlider,lv_slider_create,lv_slider_ext_t)
@@ -61,7 +60,7 @@ public:
      * @param value new value
      * @param anim LV_ANIM_ON: set the value with an animation; LV_ANIM_OFF: change the value immediately
      */
-    void setValue(int16_t value, lv_anim_enable_t anim)
+    void setValue(int16_t value, lv_anim_enable_t anim = LV_ANIM_OFF)
     {
         lv_slider_set_value(this, value, anim);
     }
@@ -104,7 +103,7 @@ public:
      * @param type which style should be set
      * @param style pointer to a style
      */
-    void setStyle(Styles type, const LVStyle * style)
+    void setStyle(const LVStyle * style,Styles type)
     {
         lv_slider_set_style(this,type,style);
     }

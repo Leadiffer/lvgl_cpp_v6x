@@ -27,7 +27,6 @@
 
 class LVLed
         : public LVObject //!< 功能基类,第一个继承
-        , public LVFakeMemHeader<lv_led_ext_t> //!< 假的内存块信息,模拟lvgl的内存布局
         , public lv_led_ext_t //!< LVObject的扩展属性
 
 {

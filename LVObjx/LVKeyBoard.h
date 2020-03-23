@@ -29,7 +29,6 @@
 /*Data of keyboard*/
 class LVKeyBoard
         : public LVObject
-        , public LVFakeMemHeader<lv_kb_ext_t>
         , public lv_kb_ext_t
 {
     LV_OBJECT(LVKeyBoard,lv_kb_create,lv_kb_ext_t)
@@ -128,7 +127,7 @@ public:
      * @param type which style should be set
      * @param style pointer to a style
      */
-    void setStyle(Styles type, const LVStyle * style)
+    void setStyle(const LVStyle * style,Styles type)
     {
         lv_kb_set_style(this,type,style);
     }

@@ -25,7 +25,7 @@
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
-class LVThemeMono
+class LVThemeMono : public LVTheme
 {
 public:
     LVThemeMono() {}
@@ -36,7 +36,7 @@ public:
      * @param font pointer to a font (NULL to use the default)
      * @return pointer to the initialized theme
      */
-    static LVThemeMono * init(uint16_t hue, lv_font_t * font)
+    static LVThemeMono * init(uint16_t hue, lv_font_t * font = nullptr)
     {
         return (LVThemeMono *)lv_theme_mono_init(hue, font);
     }

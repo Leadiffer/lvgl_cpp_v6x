@@ -26,7 +26,6 @@
 /*Data of image button*/
 class LVImageButton
         : public LVObject
-        , public LVFakeMemHeader<lv_imgbtn_ext_t>
         , public lv_imgbtn_ext_t
 {
     LV_OBJECT(LVImageButton,lv_imgbtn_create,lv_imgbtn_ext_t)
@@ -72,7 +71,7 @@ public:
      */
     void setSrc(LVButton::States state, const void * src)
     {
-        lv_imgbtn_set_src(this,state,src)
+        lv_imgbtn_set_src(this,state,src);
     }
     #else
     /**
@@ -129,7 +128,7 @@ public:
      * @param type which style should be set
      * @param style pointer to a style
      */
-    void setStyle(lv_imgbtn_style_t type, const lv_style_t * style)
+    void setStyle(const LVStyle * style,Styles type)
     {
         lv_imgbtn_set_style(this,type,style);
     }

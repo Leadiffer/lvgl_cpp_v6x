@@ -18,6 +18,13 @@
 // 第四部利用C++重实现lvgl库
 
 
+//定义用户数据指针类型
+//typedef struct _user_data_ptr
+//{
+//    uintptr_t pointer:(sizeof(uintptr_t)-1); //!< 数据地址
+//    uintptr_t deleted:1; //!< 数据是否有效
+//} user_data_ptr;
+
 /////////LVCore///////////////
 #include "LVCore/LVCallBack.h"
 #include "LVCore/LVNoCopy.h"
@@ -89,6 +96,7 @@
 #include "LVObjx/LVArc.h"
 #include "LVObjx/LVBar.h"
 #include "LVObjx/LVButton.h"
+#include "LVObjx/LVButtonExt.h"
 #include "LVObjx/LVButtonMatrix.h"
 #include "LVObjx/LVCalendar.h"
 #include "LVObjx/LVCanvas.h"

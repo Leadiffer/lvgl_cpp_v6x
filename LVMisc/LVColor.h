@@ -89,7 +89,8 @@ public:
 /**********************
  *      TYPEDEFS
  **********************/
-class LVColor : public lv_color_t
+class LVColor
+        : public lv_color_t
 {
     //代价太大,不参与LV内存管理
     //LV_MEMORY
@@ -319,7 +320,7 @@ public:
         return lv_color_rgb_to_hsv(r,g,b);
     }
 
-    toHsv()
+    inline LVColorHSV toHsv()
     {
         return rgbToHsv(this->ch.red,this->ch.green,this->ch.blue);
     }

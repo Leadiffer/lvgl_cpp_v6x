@@ -2,7 +2,7 @@
 #define LVSIGNALSLOT_H
 
 #include <functional>
-#include <LVMisc/LVLinklist.h>
+#include <LVMisc/LVLinkList.h>
 #include <LVMisc/LVMemory.h>
 
 class LVSignal;

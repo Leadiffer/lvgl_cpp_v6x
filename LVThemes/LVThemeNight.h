@@ -25,7 +25,7 @@
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
-class LVThemeNight
+class LVThemeNight : public LVTheme
 {
     LV_THEME
     LVThemeNight() {}
@@ -37,7 +37,7 @@ public:
      * @param font pointer to a font (NULL to use the default)
      * @return pointer to the initialized theme
      */
-    static LVThemeNight * init(uint16_t hue, lv_font_t * font)
+    static LVThemeNight * init(uint16_t hue, lv_font_t * font = nullptr)
     {
         return (LVThemeNight *)lv_theme_night_init(hue,font);
     }

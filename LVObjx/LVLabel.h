@@ -23,10 +23,11 @@
  *      TYPEDEFS
  **********************/
 
+//class LVLabelExt : private lv_label_ext_t {};
+
 /** Data of label*/
 class LVLabel
         : public LVObject
-        , public LVFakeMemHeader<lv_label_ext_t>
         , public lv_label_ext_t
 {
     LV_OBJECT(LVLabel,lv_label_create,lv_label_ext_t)
@@ -69,7 +70,7 @@ public:
      * @return pointer to the created button
      */
     //LVLabel(LVObject * parent, const LVLabel * copy);
-    LVLabel(const char * text ,LVObject * parent, const LVLabel * copy)
+    LVLabel(const char * text ,LVObject * parent, const LVLabel * copy = nullptr)
         :LVLabel(parent,copy)
     {
         setText(text);
@@ -353,6 +354,22 @@ public:
     void cutText(uint32_t pos, uint32_t cnt)
     {
         lv_label_cut_text(this,pos,cnt);
+    }
+
+    /**
+     * @brief Append a Text to the end of label
+     */
+    void appendText(const char * txt)
+    {
+        insertText(LV_LABEL_POS_LAST,txt);
+    }
+
+    /**
+     * @brief clean all text in label
+     */
+    void cleanText()
+    {
+        setText("");
     }
 
 };

@@ -26,7 +26,6 @@
 /*Data of gauge*/
 class LVGauge
         : public LVObject
-        , public LVFakeMemHeader<lv_gauge_ext_t>
         , public lv_gauge_ext_t
 {
     LV_OBJECT(LVGauge,lv_gauge_create,lv_gauge_ext_t)
@@ -117,9 +116,9 @@ public:
      * @param type which style should be set (can be only `LV_GAUGE_STYLE_MAIN`)
      * @param style set the style of the gauge
      *  */
-    void setStyle(lv_gauge_style_t type, lv_style_t * style)
+    void setStyle(const LVStyle * style,Styles type = STYLE_MAIN)
     {
-        lv_gauge_set_style(this ,type , style);
+        lv_gauge_set_style(this ,type ,style);
     }
 
     /*=====================

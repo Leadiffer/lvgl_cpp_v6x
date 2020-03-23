@@ -69,16 +69,24 @@ public:
      * and send the formatted log message to a consol or serial port.
      * @param print_cb a function pointer to print a log
      */
+#if LV_LOG_PRINTF == 0
     static void registerPrintCallBack(LVLogPrintCallBack print_cb)
     {
+
         s_callback() = print_cb;
         lv_log_register_print_cb((lv_log_print_g_cb_t)lvLogPrintCallBackAgent);
+
     }
 
+#endif
+
+#if LV_LOG_PRINTF == 0
     static void resetPrintCallBack( lv_log_print_g_cb_t cb = (lv_log_print_g_cb_t)defaultLogPrintCallBack)
     {
         lv_log_register_print_cb(cb);
     }
+
+#endif
 
     /**
      * Add a log
@@ -120,7 +128,7 @@ public:
 
     static void defaultLogPrintCallBack(lv_log_level_t level, const char * file, uint32_t line, const char * desc)
     {
-        static const char * lvl_prefix[] = {"Trace", "Info", "Warn", "Error"};
+        static const char * lvl_prefix[] = {"Trace", "Info ", "Warn ", "Error"};
         printf("%s: %s \t(%s #%d)\n", lvl_prefix[level], desc, file, line);
     }
 #endif

@@ -55,7 +55,7 @@ public:
     void setUsed(bool use){ s.used = use; }
 };
 
-template<typename T = uint8_t>
+template<typename T = uint32_t>
 class LVFakeMemHeader
 {
 public:
@@ -66,6 +66,8 @@ public:
     LVFakeMemHeader(uint32_t size ,bool use = true)
         :m_header(size,use)
     {}
+
+    bool isUsed(){ return m_header.s.used == 1; }
 };
 
 
@@ -235,26 +237,7 @@ public:
         return (LVMemoryEntry *)((uint8_t *)data_p - sizeof(LVMemoryHeader));
     }
 
-    /**
-     * @brief 重定位 lv_mem_alloc 的返回值,
-     * 帮助LVGL_CPP便于控制内存分配,特别是那些由lvgl隐示操作的步骤
-     * 比如设置链表节点的分配,对象的创建等
-     * @param data_p
-     */
-    static void placementAlloc(void *data_p);
-    static void placementAlloc(void *data1_p,void *data2_p);
-    static void placementAlloc(void **datas_p, uint32_t count);
-    static void resetPlacementAlloc();
 
-    /**
-     * @brief 跳过内存清理
-     * 帮助LVGL_CPP便于控制内存分配,特别是那些由lvgl隐示操作的步骤
-     * 比如设置链表节点的分配
-     * @param data_p
-     */
-    static void skipFree(void *data_p);
-    static void skipFree(void **datas_p, uint32_t count);
-    static void resetSkipFree();
 
     static void setMemHeader(void *data_p, uint32_t size = 0,bool use = true)
     {
@@ -270,6 +253,35 @@ public:
     {
         return LVMemory::getMemoryEntry(data_p)->getSize();
     }
+
+    /**
+     * @brief 设置新建对象的地址
+     * @param obj 对象地址
+     * @param attr 属性地址
+     */
+    static void setNewObjectAddr(void * obj , void * attr = nullptr);
+    static void unsetNewObjectAddr();
+
+    /**
+     * @brief 设置新建任务的地址
+     * @param task
+     */
+    static void setNewTaskAddr(void *task);
+    static void unsetNewTaskAddr();
+
+    /**
+     * @brief 设置新建动画对象地址
+     * @param anim
+     */
+    static void setNewAnimAddr(void * anim);
+    static void unsetNewAnimAddr();
+
+    /**
+     * @brief 设置新建对象组的地址
+     * @param group
+     */
+    static void setNewGroupAddr(void *group);
+    static void unsetNewGroupAddr();
 };
 
 /**********************

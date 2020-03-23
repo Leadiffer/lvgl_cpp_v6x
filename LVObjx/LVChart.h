@@ -39,7 +39,6 @@ public:
 /*Data of chart */
 class LVChart
         : public LVObject
-        , public LVFakeMemHeader<lv_chart_ext_t>
         , public lv_chart_ext_t
 {
     LV_OBJECT(LVChart,lv_chart_create,lv_chart_ext_t)
@@ -238,7 +237,7 @@ public:
      * @param type which style should be set (can be only `LV_CHART_STYLE_MAIN`)
      * @param style pointer to a style
      */
-    void setStyle(Styles type, const  LVStyle * style)
+    void setStyle(const  LVStyle * style,Styles type = STYLE_MAIN)
     {
         lv_chart_set_style(this,type, style);
     }

@@ -29,7 +29,6 @@
 /*Data of window*/
 class LVWindow
         : public LVObject
-        , public LVFakeMemHeader<lv_win_ext_t>
         , public lv_win_ext_t
 {
     LV_OBJECT(LVWindow,lv_win_create,lv_win_ext_t)
@@ -131,7 +130,7 @@ public:
      * @param win pointer to a window object
      * @param sb_mode the new scroll bar mode from  'lv_sb_mode_t'
      */
-    void setScrollBarMode(LVPage::Modes sb_mode)
+    void setScrollBarMode(LVPage::SBModes sb_mode)
     {
         lv_win_set_sb_mode(this,sb_mode);
     }
@@ -152,7 +151,7 @@ public:
      * @param type which style should be set
      * @param style pointer to a style
      */
-    void setStyle(Styles type, const LVStyle * style)
+    void setStyle(const LVStyle * style,Styles type)
     {
         lv_win_set_style(this,type,style);
     }
@@ -227,9 +226,9 @@ public:
      * @param win pointer to a window object
      * @return the scroll bar mode of the window (from 'lv_sb_mode_t')
      */
-    LVPage::Modes getScrollBarMode()
+    LVPage::SBModes getScrollBarMode()
     {
-        return (LVPage::Modes)lv_win_get_sb_mode(this);
+        return (LVPage::SBModes)lv_win_get_sb_mode(this);
     }
 
     /**
@@ -283,7 +282,7 @@ public:
      * @param obj pointer to an object to focus (must be in the window)
      * @param anim_en LV_ANIM_ON focus with an animation; LV_ANIM_OFF focus without animation
      */
-    void focus(lv_obj_t * obj, lv_anim_enable_t anim_en)
+    void focus(lv_obj_t * obj, lv_anim_enable_t anim_en = LV_ANIM_OFF)
     {
         lv_win_focus(this,obj,anim_en);
     }

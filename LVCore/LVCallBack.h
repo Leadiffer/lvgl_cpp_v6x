@@ -57,7 +57,7 @@ private:
     //使用位域减少内存使用,限制就是,仅支持31位地址寻址
     struct
     {
-        uintptr_t m_pointer :31 ; //!< 可执行对象 (StdFunc*) (MethodSignature*)
+        uintptr_t m_pointer :sizeof(uintptr_t)*8-1 ; //!< 可执行对象 (StdFunc*) (MethodSignature*)
         uintptr_t m_type     :1  ; //!< 内部数据类型
     };
 
@@ -175,11 +175,11 @@ public:
             m_pointer = other.m_pointer;
             //take other`s data,then reset it
             other.m_type = FUNC_PTR;
-            other.m_pointer = nullptr;
+            other.m_pointer = 0;
         }
         else
         {
-            m_pointer = (uintptr_t)(nullptr);
+            m_pointer = 0;
             m_type = FUNC_PTR;
         }
         return *this;

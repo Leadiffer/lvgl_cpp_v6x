@@ -29,7 +29,6 @@
 /*Data of message box*/
 class LVMessageBox
         : public LVObject
-        , public LVFakeMemHeader<lv_mbox_ext_t>
         , public lv_mbox_ext_t
 {
     LV_OBJECT(LVMessageBox,lv_mbox_create,lv_mbox_ext_t)
@@ -70,7 +69,7 @@ public:
      * @param btn_map button descriptor (button matrix map).
      *                E.g.  a const char *txt[] = {"ok", "close", ""} (Can not be local variable)
      */
-    void addBtns(const char ** btn_mapaction)
+    void addButtons(const char ** btn_mapaction)
     {
         lv_mbox_add_btns(this,btn_mapaction);
     }
@@ -124,7 +123,7 @@ public:
      * @param type which style should be set
      * @param style pointer to a style
      */
-    void setStyle(Styles type, const LVStyle * style)
+    void setStyle(const LVStyle * style,Styles type)
     {
         lv_mbox_set_style(this,type,style);
     }

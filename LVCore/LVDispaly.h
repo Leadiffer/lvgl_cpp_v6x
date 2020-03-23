@@ -3,18 +3,16 @@
  *
  */
 
-
+#ifndef LVDISPLAY_H
+#define LVDISPLAY_H
 
 /*********************
  *      INCLUDES
  *********************/
 
-#ifndef LV_DISPLAY_CLASS
-    #include "../LVHal/LVHalDisplayDirver.h"
-#else
+#include <lv_core/lv_disp.h>
+#include "../LVHal/LVHalDisplayDirver.h"
 
-//#ifndef LVDISPLAY_H
-//#define LVDISPLAY_H
 
 /*********************
  *      DEFINES
@@ -24,17 +22,145 @@
  *      TYPEDEFS
  **********************/
 
+class LVObject;
+class LVTask;
+
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
 
-//NOTE:  * NOTE: there is only part of LVDisplay class definition
-//#include <lv_core/lv_disp.h>
-//class LVObject;
-//class LVTask;
-//class LVDisplay
-//{
 
+
+/**
+ * Display structure.
+ * ::lv_disp_drv_t is the first member of the structure.
+ *
+ * NOTE: 类对象无法由用户实例化,只能注册驱动时获得
+ * NOTE: there is only part of LVDisplay class definition
+ */
+class LVDisplay
+        : public lv_disp_t
+{
+
+    LVDisplay() {}
+
+public:
+
+    /**
+     * Remove a display
+     * @param disp pointer to display
+     */
+    void remove()
+    {
+        lv_disp_remove(this);
+    }
+
+    /**
+     * Set a default screen. The new screens will be created on it by default.
+     * @param disp pointer to a display
+     */
+    void setDefault()
+    {
+        lv_disp_set_default(this);
+    }
+
+    /**
+     * Get the default display
+     * @return pointer to the default display
+     */
+    static LVDisplay * getDefault(void)
+    {
+        return (LVDisplay *)lv_disp_get_default();
+    }
+
+    /**
+     * Get the horizontal resolution of a display
+     * @param disp pointer to a display (NULL to use the default display)
+     * @return the horizontal resolution of the display
+     */
+    LVCoord getHorizontalResolution()
+    {
+        return lv_disp_get_hor_res(this);
+    }
+
+    /**
+     * Get the vertical resolution of a display
+     * @param disp pointer to a display (NULL to use the default display)
+     * @return the vertical resolution of the display
+     */
+    LVCoord getVerticalResolution()
+    {
+        return lv_disp_get_ver_res(this);
+    }
+
+    /**
+     * Get if anti-aliasing is enabled for a display or not
+     * @param disp pointer to a display (NULL to use the default display)
+     * @return true: anti-aliasing is enabled; false: disabled
+     */
+    bool getAntialiasing()
+    {
+        return lv_disp_get_antialiasing(this);
+    }
+
+    /**
+     * Get the next display.
+     * @param disp pointer to the current display. NULL to initialize.
+     * @return the next display or NULL if no more. Give the first display when the parameter is NULL
+     */
+    LVDisplay * getNext()
+    {
+        return (LVDisplay*)lv_disp_get_next(this);
+    }
+
+    /**
+     * Get the internal buffer of a display
+     * @param disp pointer to a display
+     * @return pointer to the internal buffers
+     */
+    LVDispalyBuffer * getBuffer()
+    {
+        return (LVDispalyBuffer *)lv_disp_get_buf(this);
+    }
+
+    /**
+     * Get the number of areas in the buffer
+     * @return number of invalid areas
+     */
+    uint16_t getInvalidBufferSize()
+    {
+        return lv_disp_get_inv_buf_size(this);
+    }
+
+    /**
+     * Pop (delete) the last 'num' invalidated areas from the buffer
+     * @param num number of areas to delete
+     */
+    void popFromInvalidBuffer(uint16_t num)
+    {
+        lv_disp_pop_from_inv_buf(this,num);
+    }
+
+    /**
+     * Check the driver configuration if it's double buffered (both `buf1` and `buf2` are set)
+     * @param disp pointer to to display to check
+     * @return true: double buffered; false: not double buffered
+     */
+    bool isDoubleBuffer()
+    {
+        return lv_disp_is_double_buf(this);
+    }
+
+    /**
+     * Check the driver configuration if it's TRUE double buffered (both `buf1` and `buf2` are set and
+     * `size` is screen sized)
+     * @param disp pointer to to display to check
+     * @return true: double buffered; false: not double buffered
+     */
+    bool isTrueDoubleBuffer()
+    {
+        return lv_disp_is_true_double_buf(this);
+    }
     /**
      * Return with a pointer to the active screen
      * @param disp pointer to display which active screen should be get. (NULL to use the default
@@ -44,20 +170,20 @@
     //获取当前活动的屏幕上的活动对象
     static LVObject * getScreenActived(LVDisplay * disp_p)
     {
-        return (LVObject *)lv_disp_get_scr_act(disp_p);
+        return lvobject_cast<LVObject*>(lv_disp_get_scr_act(disp_p),true);
     }
 
     //获取显示器上的活动对象
     LVObject * getScreenActived()
     {
-        return (LVObject *)lv_disp_get_scr_act(this);
+        return lvobject_cast<LVObject*>(lv_disp_get_scr_act(this),true);
     }
 
     /**
      * Make a screen active
      * @param scr pointer to a screen
      */
-    static void loadScreen(LVObject * scr)//?????????????
+    static void loadScreen(LVObject * scr)
     {
         lv_disp_load_scr(scr);
     }
@@ -69,11 +195,11 @@
      */
     static LVObject * getLayerTop(LVDisplay * disp_p)
     {
-        return (LVObject *)lv_disp_get_layer_top(disp_p);
+        return lvobject_cast<LVObject*>(lv_disp_get_layer_top(disp_p),true);
     }
     LVObject * getLayerTop()
     {
-        return (LVObject *)lv_disp_get_layer_top(this);
+        return lvobject_cast<LVObject*>(lv_disp_get_layer_top(this),true);
     }
 
     /**
@@ -84,11 +210,11 @@
      */
     static LVObject * getLayerSys(LVDisplay * disp_p)
     {
-        return (LVObject *)lv_disp_get_layer_sys(disp_p);
+        return lvobject_cast<LVObject*>(lv_disp_get_layer_sys(disp_p),true);
     }
     LVObject * getLayerSys()
     {
-        return (LVObject *)lv_disp_get_layer_sys(this);
+        return lvobject_cast<LVObject*>(lv_disp_get_layer_sys(this),true);
     }
 
     /**
@@ -143,10 +269,8 @@
         lv_disp_trig_activity(this);
     }
 };
-//#endif /*LVDISPLAY_H*/
 
 /**********************
  *      MACROS
  **********************/
-
-#endif /*LV_DISPLAY_CLASS*/
+#endif /*LVDISPLAY_H*/

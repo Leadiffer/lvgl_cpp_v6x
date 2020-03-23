@@ -35,7 +35,6 @@ public:
 /*Data of calendar*/
 class LVCalendar
         : public LVObject
-        , public LVFakeMemHeader<lv_calendar_ext_t>
         , public lv_calendar_ext_t
 {
     LV_OBJECT(LVCalendar,lv_calendar_create,lv_calendar_ext_t)
@@ -138,7 +137,7 @@ public:
      * @param type which style should be set
      * @param style pointer to a style
      *  */
-    void setStyle(Styles type, const LVStyle * style)
+    void setStyle(const LVStyle * style,Styles type)
     {
         lv_calendar_set_style(this,type,style);
     }

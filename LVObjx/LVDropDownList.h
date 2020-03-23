@@ -28,7 +28,6 @@
 
 class LVDropDownList
         : public LVObject
-        , public LVFakeMemHeader<lv_ddlist_ext_t>
         , public lv_ddlist_ext_t
 {
     LV_OBJECT(LVDropDownList,lv_ddlist_create,lv_ddlist_ext_t)
@@ -124,7 +123,7 @@ public:
      * @param ddlist pointer to a drop down list object
      * @param sb_mode the new mode from 'lv_page_sb_mode_t' enum
      */
-    void setScrollBarMode(LVPage::Modes mode)
+    void setScrollBarMode(LVPage::SBModes mode)
     {
         lv_ddlist_set_sb_mode(this, mode);
     }
@@ -144,7 +143,7 @@ public:
      * @param type which style should be set
      * @param style pointer to a style
      *  */
-    void setStyle(Styles type, const LVStyle * style)
+    void setStyle(const LVStyle * style,Styles type)
     {
         lv_ddlist_set_style(this,type,style);
     }
@@ -227,9 +226,9 @@ public:
      * @param ddlist pointer to a  drop down list object
      * @return scrollbar mode from 'lv_page_sb_mode_t' enum
      */
-    LVPage::Modes getScrollBarMode()
+    LVPage::SBModes getScrollBarMode()
     {
-        return (LVPage::Modes)lv_ddlist_get_sb_mode(this);
+        return (LVPage::SBModes)lv_ddlist_get_sb_mode(this);
     }
 
     /**
@@ -272,7 +271,7 @@ public:
      * @param ddlist pointer to drop down list object
      * @param anim_en LV_ANIM_ON: use animation; LV_ANOM_OFF: not use animations
      */
-    void open(lv_anim_enable_t anim)
+    void open(lv_anim_enable_t anim = LV_ANIM_OFF)
     {
         lv_ddlist_open(this,anim);
     }
@@ -282,7 +281,7 @@ public:
      * @param ddlist pointer to drop down list object
      * @param anim_en LV_ANIM_ON: use animation; LV_ANOM_OFF: not use animations
      */
-    void close(lv_anim_enable_t anim)
+    void close(lv_anim_enable_t anim = LV_ANIM_OFF)
     {
         lv_ddlist_close(this,anim);
     }

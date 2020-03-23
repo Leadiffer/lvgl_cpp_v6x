@@ -25,7 +25,6 @@
 /*Data of image*/
 class LVImage
         : public LVObject
-        , public LVFakeMemHeader<lv_img_ext_t>
         , public lv_img_ext_t
 {
     LV_OBJECT(LVImage,lv_img_create,lv_img_ext_t)

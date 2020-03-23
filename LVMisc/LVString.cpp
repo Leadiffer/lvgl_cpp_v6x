@@ -22,6 +22,17 @@
 #include "LVString.h"
 #include "lv_misc/lv_mem.h"
 
+#ifndef WIN32
+static void itoa(unsigned int value,char *buf, unsigned char base)
+{
+    sprintf(buf,
+            base==10?"%d":
+            base==8?"%o":
+            base==16?"%x":
+            "%d",
+            value);
+}
+#endif
 
 static void utoa(unsigned int value,char *buf, unsigned char base)
 {
@@ -33,7 +44,6 @@ static void utoa(unsigned int value,char *buf, unsigned char base)
             value);
 }
 
-
 static void ultoa(unsigned long value,char *buf, unsigned char base)
 {
     sprintf(buf,
@@ -43,6 +53,18 @@ static void ultoa(unsigned long value,char *buf, unsigned char base)
             "%ld",
             value);
 }
+
+#ifndef WIN32
+static void ltoa(unsigned long value,char *buf, unsigned char base)
+{
+    sprintf(buf,
+            base==10?"%ld":
+            base==8?"%lo":
+            base==16?"%lx":
+            "%ld",
+            value);
+}
+#endif
 
 static char* dtostrf(double _val,signed char _width,unsigned char _prec,char* _s)
 {

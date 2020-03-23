@@ -23,7 +23,6 @@
 /*Data of spinbox*/
 class LVSpinBox
         : public LVObject
-        , public LVFakeMemHeader<lv_spinbox_ext_t>
         , public lv_spinbox_ext_t
 {
     LV_OBJECT(LVSpinBox,lv_spinbox_create,lv_spinbox_ext_t)
@@ -60,7 +59,7 @@ public:
      * @param type which style should be set
      * @param style pointer to a style
      */
-    void setStyle(Styles type, LVStyle * style)
+    void setStyle(const LVStyle * style,Styles type)
     {
         lv_spinbox_set_style(this, type, style);
     }

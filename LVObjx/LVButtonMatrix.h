@@ -26,7 +26,6 @@
 /*Data of button matrix*/
 class LVButtonMatrix
         : public LVObject
-        , public LVFakeMemHeader<lv_btnm_ext_t>
         , public lv_btnm_ext_t
 {
     LV_OBJECT(LVButtonMatrix,lv_btnm_create,lv_btnm_ext_t)
@@ -117,7 +116,7 @@ public:
      * @param type which style should be set
      * @param style pointer to a style
      */
-    void setStyle(Styles type, const LVStyle * style)
+    void setStyle(const LVStyle * style,Styles type)
     {
         lv_btnm_set_style(this,type,style);
     }
@@ -175,7 +174,7 @@ public:
 
     /**
      * Set a single buttons relative width.
-     * This method will cause the matrix be regenerated and is a relatively
+     * this method will cause the matrix be regenerated and is a relatively
      * expensive operation. It is recommended that initial width be specified using
      * `lv_btnm_set_ctrl_map` and this method only be used for dynamic changes.
      * @param btnm pointer to button matrix object

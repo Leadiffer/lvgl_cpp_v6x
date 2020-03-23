@@ -52,7 +52,9 @@ using LVGroupUserData = lv_group_user_data_t;
  * Groups can be used to logically hold objects so that they can be individually focused.
  * They are NOT for laying out objects on a screen (try `lv_cont` for that).
  */
-class LVGroup : public lv_group_t
+class LVGroup
+        : public lv_group_t
+        , public LVLLNodeMeta<lv_group_t>
 {
     LV_MEMORY
 
@@ -82,19 +84,40 @@ public:
      */
     LVGroup()
     {
-        LVMemory::placementAlloc(this);
+        LVMemory::setNewGroupAddr(static_cast<lv_group_t*>(this));
         lv_group_create();
-        LVMemory::resetPlacementAlloc();
+        class_ptr.full = this;
+        class_ptr.deleted = false;
+        LVMemory::unsetNewGroupAddr();
+        lvTrace("LVGroup Created. %p",this);
     }
 
     /**
      * Delete a group object
      * @param group pointer to a group
      */
-    ~LVGroup()
+    virtual ~LVGroup()
     {
-        lv_group_del(this);
+        if(!class_ptr.deleted)
+        {
+            class_ptr.deleted = true;
+            lv_group_del(this);
+        }
+        lvTrace("LVGroup Destroyed. %p",this);
     }
+
+    /**
+     * @brief check group is vailed
+     * @return
+     */
+    bool isVaild();
+
+    /**
+     * @brief check group is vailed group instance
+     * @param obj
+     * @return
+     */
+    static bool isVaild(lv_group_t * group);
 
 
     /**
@@ -265,7 +288,7 @@ public:
      */
     LVObject * getFocused()
     {
-        return (LVObject *)lv_group_get_focused(this);
+        return lvobject_cast<LVObject*>(lv_group_get_focused(this),true);
     }
 
     #if LV_USE_USER_DATA

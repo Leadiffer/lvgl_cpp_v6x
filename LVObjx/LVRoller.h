@@ -27,7 +27,6 @@
 /*Data of roller*/
 class LVRoller
         : public LVObject
-        , LVFakeMemHeader<lv_roller_ext_t>
         , lv_roller_ext_t
 {
 public:
@@ -88,7 +87,7 @@ public:
      * @param sel_opt id of the selected option (0 ... number of option - 1);
      * @param anim LV_ANOM_ON: set with animation; LV_ANIM_OFF set immediately
      */
-    void setSelected(uint16_t sel_opt, lv_anim_enable_t anim)
+    void setSelected(uint16_t sel_opt, lv_anim_enable_t anim = LV_ANIM_OFF)
     {
         lv_roller_set_selected(this,sel_opt,anim);
     }
@@ -129,7 +128,7 @@ public:
      * @param type which style should be set
      * @param style pointer to a style
      */
-    void setStyle(Styles type, const LVStyle * style)
+    void setStyle(const LVStyle * style,Styles type)
     {
         lv_roller_set_style(this,type,style);
     }

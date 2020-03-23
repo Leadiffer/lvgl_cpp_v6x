@@ -34,10 +34,18 @@ class LVLinkList;
  * class LVTask : public lv_task_t , public LVLLNodeMeta , public LVTaskEnhance
  * class LVObject : public lv_obj_t , public LVLLNodeMeta
  */
-struct LVLLNodeMeta
+template<class T>
+class LVLLNodeMeta
 {
-    lv_ll_node_t * _Prev; //!< 前一个节点指针
-    lv_ll_node_t * _Next; //!< 后一个节点指针
+    class Node : public T
+    {
+    public:
+        Node * _Prev; //!< 前一个节点指针
+        Node * _Next; //!< 后一个节点指针
+    };
+public:
+    Node * _Prev; //!< 前一个节点指针
+    Node * _Next; //!< 后一个节点指针
 };
 
 /**
@@ -57,13 +65,13 @@ public:
     ~LVLLNode() {}
 
     T m_nodeData; //!< 节点数据
-    LVLLNodeMeta m_nodeMeta; //!< 节点元信息
+    LVLLNodeMeta<T> m_nodeMeta; //!< 节点元信息
 
-//    T& operator->(){ return m_nodeData; }
-//    const T& operator->() const { return m_nodeData; }
+    //T& operator->(){ return m_nodeData; }
+    //const T& operator->() const { return m_nodeData; }
 
     //TODO:这里的操作需要区分类类型 基本类型 指针类型
-    operator T(){ return m_nodeData; }
+    //operator T(){ return m_nodeData; }
 
     /**
      * @brief 节点数据
@@ -119,9 +127,6 @@ template<class T = lv_ll_node_t>
 class LVLinkList : public lv_ll_t
 {
     LV_MEMORY
-
-protected:
-   LVLinkList(){}
 
 public:
 

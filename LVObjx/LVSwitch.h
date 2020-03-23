@@ -26,7 +26,6 @@
 
 class LVSwitch
         : public LVObject
-        , public LVFakeMemHeader<lv_sw_ext_t>
         , public lv_sw_ext_t
 {
     LV_OBJECT(LVSwitch,lv_sw_create,lv_sw_ext_t)
@@ -84,7 +83,7 @@ public:
      * @param anim LV_ANIM_ON: set the value with an animation; LV_ANIM_OFF: change the value immediately
      * @return resulting state of the switch.
      */
-    bool toggle(lv_anim_enable_t anim)
+    bool toggle(lv_anim_enable_t anim = LV_ANIM_OFF)
     {
         return lv_sw_toggle(this,anim);
     }
@@ -95,7 +94,7 @@ public:
      * @param type which style should be set
      * @param style pointer to a style
      */
-    void setStyle(Styles type, const LVStyle * style)
+    void setStyle(const LVStyle * style,Styles type)
     {
         lv_sw_set_style(this,type,style);
     }

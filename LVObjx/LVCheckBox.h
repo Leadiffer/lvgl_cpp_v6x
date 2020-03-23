@@ -26,7 +26,6 @@
 /*Data of check box*/
 class LVCheckBox
         : public LVObject
-        , public LVFakeMemHeader<lv_cb_ext_t>
         , public lv_cb_ext_t
 {
     LV_OBJECT(LVCheckBox,lv_cb_create,lv_cb_ext_t)
@@ -35,12 +34,12 @@ public:
     /** Checkbox styles. */
     enum Styles : lv_cb_style_t
     {
-        LV_CB_STYLE_BG, /**< Style of object background. */
-        LV_CB_STYLE_BOX_REL, /**< Style of box (released). */
-        LV_CB_STYLE_BOX_PR, /**< Style of box (pressed). */
-        LV_CB_STYLE_BOX_TGL_REL, /**< Style of box (released but checked). */
-        LV_CB_STYLE_BOX_TGL_PR, /**< Style of box (pressed and checked). */
-        LV_CB_STYLE_BOX_INA, /**< Style of disabled box */
+        STYLE_BG          = LV_CB_STYLE_BG,         /**< Style of object background. */
+        STYLE_BOX_REL     = LV_CB_STYLE_BOX_REL,    /**< Style of box (released). */
+        STYLE_BOX_PR      = LV_CB_STYLE_BOX_PR,     /**< Style of box (pressed). */
+        STYLE_BOX_TGL_REL = LV_CB_STYLE_BOX_TGL_REL,/**< Style of box (released but checked). */
+        STYLE_BOX_TGL_PR  = LV_CB_STYLE_BOX_TGL_PR, /**< Style of box (pressed and checked). */
+        STYLE_BOX_INA     = LV_CB_STYLE_BOX_INA,    /**< Style of disabled box */
     };
 
     /**********************
@@ -106,7 +105,7 @@ public:
      * @param type which style should be set
      * @param style pointer to a style
      *  */
-    void setStyle(Styles type, const LVStyle * style)
+    void setStyle(const LVStyle * style,Styles type)
     {
         lv_cb_set_style(this,type,style);
     }

@@ -25,7 +25,6 @@
 
 class LVLine
         : public LVObject
-        , public LVFakeMemHeader<lv_line_ext_t>
         , public lv_line_ext_t
 {
     LV_OBJECT(LVLine,lv_line_create,lv_line_ext_t)

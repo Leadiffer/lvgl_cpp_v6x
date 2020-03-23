@@ -27,7 +27,6 @@
 /*Data of list*/
 class LVList
         : public LVObject
-        , public LVFakeMemHeader<lv_list_ext_t>
         , public lv_list_ext_t
 {
     LV_OBJECT(LVList,lv_list_create,lv_list_ext_t)
@@ -121,6 +120,7 @@ public:
     void setBtnSelected(lv_obj_t * btn)
     {
         lv_list_set_btn_selected(this,btn);
+        lv_btn_set_state(btn,LV_BTN_STATE_TGL_REL);
     }
     #endif
 
@@ -129,7 +129,7 @@ public:
      * @param list pointer to a list object
      * @param sb_mode the new mode from 'lv_page_sb_mode_t' enum
      */
-    void setScrollBarMode(LVPage::Modes mode)
+    void setScrollBarMode(LVPage::SBModes mode)
     {
         lv_page_set_sb_mode(this, mode);
     }
@@ -171,7 +171,7 @@ public:
      * @param type which style should be set
      * @param style pointer to a style
      */
-    void setStyle(Styles type, const LVStyle * style)
+    void setStyle(const LVStyle * style,Styles type)
     {
         lv_list_set_style(this,type,style);
     }
@@ -278,9 +278,9 @@ public:
      * @param list pointer to a list object
      * @return scrollbar mode from 'lv_page_sb_mode_t' enum
      */
-    LVPage::Modes getScrollBarMode()
+    LVPage::SBModes getScrollBarMode()
     {
-        return (LVPage::Modes)lv_list_get_sb_mode(this);
+        return (LVPage::SBModes)lv_list_get_sb_mode(this);
     }
 
     /**
@@ -350,7 +350,7 @@ public:
      * @param btn pointer to a list button to focus
      * @param anim LV_ANOM_ON: scroll with animation, LV_ANIM_OFF: without animation
      */
-    static void focus(const lv_obj_t * btn, lv_anim_enable_t anim)
+    static void focus(const lv_obj_t * btn, lv_anim_enable_t anim = LV_ANIM_OFF)
     {
         lv_list_focus(btn,anim);
     }
@@ -358,6 +358,30 @@ public:
     /**********************
      *      MACROS
      **********************/
+
+    /**
+     * @brief 获取指定索引号下的按钮
+     * @param btn_idx
+     * @return
+     */
+    lv_obj_t * getBtnByIndex(int32_t btn_idx)
+    {
+        lv_obj_t * list = static_cast<lv_obj_t *>(this);
+        int index = 0;
+        lv_obj_t * btn = lv_list_get_next_btn(list, nullptr);
+        while(btn)
+        {
+            if(btn_idx == index)
+            {
+                return btn;
+            }
+
+            index++;
+            btn = lv_list_get_next_btn(list, btn);
+        }
+
+        return nullptr;
+    }
 
 };
 

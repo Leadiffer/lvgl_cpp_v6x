@@ -28,7 +28,6 @@
 
 class LVTileView
         : public LVObject
-        , public LVFakeMemHeader<lv_tileview_ext_t>
         , public lv_tileview_ext_t
 {
     LV_OBJECT(LVTileView,lv_tileview_create,lv_tileview_ext_t)
@@ -37,7 +36,7 @@ public:
     /*Styles*/
     enum Styles : lv_tileview_style_t
     {
-        LV_TILEVIEW_STYLE_MAIN,
+        STYLE_MAIN,
     };
 
     /**********************
@@ -89,7 +88,7 @@ public:
      * @param y line id (0, 1, 2...)
      * @param anim LV_ANIM_ON: set the value with an animation; LV_ANIM_OFF: change the value immediately
      */
-    void setTileAct(lv_coord_t x, lv_coord_t y, lv_anim_enable_t anim)
+    void setTileAct(lv_coord_t x, lv_coord_t y, lv_anim_enable_t anim = LV_ANIM_OFF)
     {
         lv_tileview_set_tile_act(this,x,y,anim);
     }
@@ -120,7 +119,7 @@ public:
      * @param type which style should be set
      * @param style pointer to a style
      */
-    void setStyle(Styles type, const LVStyle * style)
+    void setStyle(const LVStyle * style,Styles type = STYLE_MAIN)
     {
         lv_tileview_set_style(this,type,style);
     }

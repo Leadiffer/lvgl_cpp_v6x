@@ -27,7 +27,6 @@
 
 class LVButton
         : public LVObject
-        , public LVFakeMemHeader<lv_btn_ext_t>
         , public lv_btn_ext_t
 {
     LV_OBJECT(LVButton,lv_btn_create,lv_btn_ext_t)

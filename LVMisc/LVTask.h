@@ -32,37 +32,6 @@ class LVTask;
 using LVTaskCallBack =  LVCallBack<void(LVTask*),void>;
 
 /**
- * @brief LVTask的扩展数据成员
- * 由于要配合lvgl的内存布局,所以扩展数据都放在单独的数据类中
- */
-class LVTaskEnhance
-{
-protected:
-    LVTaskCallBack m_callBack; //!< 任务执行函数
-    lv_task_prio_t m_priority;  //!< 任务优先级
-    int m_times = -1;           //!< 任务需要运行的次数 0~0xEFFFFFFF ; -1 表示无次数限制
-    struct
-    {
-        uint32_t m_count :31;       //!< 记录任务的运行次数
-        uint32_t m_deleteAfterStop :1; //!< 任务停止时清除任务
-    };
-
-    LVTaskEnhance(){m_count =0; m_deleteAfterStop = 0; }
-};
-
-
-/**
- * @brief 任务结构体在链表中的数据节点
- */
-class LVTaskNode
-        : public lv_task_t
-        , public LVLLNodeMeta
-{
-public:
-    LVTaskNode() {}
-};
-
-/**
  * Descriptor of a lv_task
  */
 
@@ -75,21 +44,20 @@ public:
  * 快捷单次运行任务
  */
 class LVTask
-        : public LVTaskEnhance
-        , public LVFakeMemHeader<LVTaskNode>
-        , public LVTaskNode
+        : public lv_task_t
+        , public LVLLNodeMeta<lv_task_t>
 {
     LV_MEMORY
 
 protected:
-    struct Protected{};
-    LVTask(Protected)
-    {
-        //初始化隐形的 LVMemoryHeader
-        LVMemoryEntry * ent = LVMemory::getMemoryEntry(this);
-        //虚表指针,再加上LVTaskEnhance的大小
-        ent->setSize( (uintptr_t)((LVFakeMemHeader<LVTaskNode>*)this) - (uintptr_t)this );
-    }
+    LVTaskCallBack m_callBack; //!< 任务执行函数
+
+    int m_times = -1;          //!< 任务需要运行的次数 0~0xEFFFFFFF ; -1 表示无次数限制
+    int m_count = 0;           //!< 记录任务的运行次数
+
+    uint8_t m_deleteAfterStop :1;//!< 任务停止时清除任务
+    uint8_t m_priority:3;       //!< 任务优先级
+
 public:
     /**
      * Possible priorities for lv_tasks
@@ -104,22 +72,6 @@ public:
         PRIO_HIGHEST = LV_TASK_PRIO_HIGHEST,
         _PRIO_NUM    = _LV_TASK_PRIO_NUM   ,
     };
-
-//    /**
-//     * @brief The LVTaskPrivate class
-//     * same as lv_task_t
-//     */
-//    class LVTaskPrivate
-//    {
-//        uint32_t period; /**< How often the task should run */
-//        uint32_t last_run; /**< Last time the task ran */
-//        lv_task_cb_t task_cb; /**< Task function */
-
-//        void * user_data; /**< Custom user data */
-
-//        uint8_t prio : 3; /**< Task priority */
-//        uint8_t once : 1; /**< 1: one shot task */
-//    };
 
     /**********************
      * GLOBAL PROTOTYPES
@@ -146,16 +98,6 @@ public:
      * `lv_task_set_cb` and `lv_task_set_period`
      * @return pointer to the craeted task
      */
-    //这个构造函数没有啥意义
-    //LVTask()
-    //{
-    //    //默认任务创建后不会运行,直到调用了start()
-    //    LVMemory::placementAlloc(this);
-    //    lv_task_create_basic();
-    //    LVMemory::resetPlacementAlloc();
-    //    m_priority(LV_TASK_PRIO_OFF);
-    //    setPeriod(LV_TASK_PRIO_OFF);
-    //}
 
     /**
      * Create a new lv_task
@@ -165,17 +107,21 @@ public:
      * @param user_data custom parameter
      * @return pointer to the new task
      */
-    LVTask( uint32_t period = 500,const LVTaskCallBack & task_cb = LVTaskCallBack(), Priority prio = Priority(LV_TASK_PRIO_MID), void * user_data = nullptr)
-        :LVTask(Protected())
+    LVTask(const LVTaskCallBack& task_cb = LVTaskCallBack(), uint32_t period = 500,Priority prio = PRIO_MID/*, void * user_data = nullptr*/)
     {
+        m_count =0;
+        m_deleteAfterStop = 0;
+
         //默认任务创建后不会运行,直到调用了start().
-        LVMemory::placementAlloc((LVTaskNode*)this);
-        lv_task_create((lv_task_cb_t)lvTaskCallBackAgency,period,LV_TASK_PRIO_OFF,user_data);
-        LVMemory::resetPlacementAlloc();
+        LVMemory::setNewTaskAddr(static_cast<lv_task_t*>(this));
+        lv_task_create((lv_task_cb_t)callBackAgency,period,PRIO_OFF,this);
+        class_ptr.pointer = reinterpret_cast<uintptr_t>(this); //关联对象
+        class_ptr.deleted = false;
+        LVMemory::unsetNewTaskAddr();
         m_callBack = task_cb;
         m_priority = prio;
 
-        lvTrace("LVTask Created. %p",this);
+        lvInfo("LVTask(0x%p) Created. ",this);
     }
 
     /**
@@ -183,18 +129,28 @@ public:
      * @param task pointer to task_cb created by task
      */
 
-    ~LVTask()
+    virtual ~LVTask()
     {
-        lv_task_del(this);
-        lvTrace("LVTask Destroyed. %p",this);
+        if(!class_ptr.deleted)
+        {
+            class_ptr.deleted = true;
+            lv_task_del(this);
+        }
+        lvInfo("LVTask(0x%p) Destroyed.",this);
     }
 
+    /**
+     * @brief check task is vailed
+     * @return
+     */
+    bool isVaild();
 
-    operator lv_task_t*()
-    {
-        return this;
-    }
-
+    /**
+     * @brief check task is vailed task instance
+     * @param obj
+     * @return
+     */
+    static bool isVaild(lv_task_t * task);
 
     /**
      * Set the callback the task (the function to call periodically)
@@ -204,7 +160,6 @@ public:
     void setCallBack(const LVTaskCallBack & task_cb)
     {
         m_callBack = task_cb;
-        //lv_task_set_cb(this,task_cb);
     }
 
     /**
@@ -217,12 +172,11 @@ public:
         if(m_priority != prio)
         {
             m_priority = prio;
-            if(isRunning()) //period != s_infinitePeriod
+            if(isRunning())
             {
                 lv_task_set_prio(this, prio);
             }
         }
-        //lv_task_set_prio(this,prio);
     }
 
     /**
@@ -248,7 +202,7 @@ public:
      * Delete the lv_task after one call
      * @param task pointer to a lv_task.
      */
-    void once() //ThenDelete
+    void once()
     {
         lv_task_once(this);
     }
@@ -403,7 +357,7 @@ public:
      * @brief 任务的从上一次运行后执行的次数
      * @return
      */
-    uint32_t getCount(){ return m_count; }
+    int getCount(){ return m_count; }
 
     /**
      * @brief 重置任务计数
@@ -429,9 +383,8 @@ public:
      */
     static void once(uint32_t period ,const LVTaskCallBack & callback)
     {
-        LVTask * onceTask = new LVTask();
+        LVTask * onceTask = new LVTask(callback);
         onceTask->setPeriod(period);
-        onceTask->setCallBack(callback);
         onceTask->setDeleteAfterStop(true);
         onceTask->start(period,1);
     }
@@ -479,7 +432,7 @@ public:
      * @brief LVTask 任务回调函数的代理函数
      * @param param
      */
-    static void lvTaskCallBackAgency(struct _lv_task_t * t)
+    static void callBackAgency(struct _lv_task_t * t)
     {
         LVTask * task = (LVTask *)t;
 

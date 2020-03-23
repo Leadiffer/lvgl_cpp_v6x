@@ -16,6 +16,7 @@
 //#include <functional>
 #include "LVMemory.h"
 #include "../LVCore/LVCallBack.h"
+#include "../LVMisc/LVLinkList.h"
 
 /*********************
  *      DEFINES
@@ -73,9 +74,16 @@ using LVAnimReadyCallBack = LVCallBack<void(LVAnimation *),void>;
  * NOTE: 由于ExecCallBack 和 CustomExecCallBack
  * 除了回调函数的形式参数不同之外,实现都一样,因此屏蔽了CustomExec的所有接口
  */
-class LVAnimation : public lv_anim_t
+class LVAnimation
+        : public lv_anim_t
+        , public LVLLNodeMeta<lv_anim_t>
 {
     LV_MEMORY
+
+protected:
+    LVAnimExecCallBack       m_exec_cb;   /*Function to execute to animate*/
+    LVAnimPathCallBack       m_path_cb;   /*An array with the steps of animations*/
+    LVAnimReadyCallBack      m_ready_cb;  /*Call it when the animation is ready*/
 
 public:
 
@@ -101,30 +109,39 @@ public:
      */
     LVAnimation()
     {
-        lv_anim_init(this);
+        LVMemory::setNewAnimAddr(static_cast<lv_anim_t*>(this));
+        lv_anim_create(this);
+        class_ptr.full = this;
+        class_ptr.deleted = false;
+        LVMemory::unsetNewAnimAddr();
+
+        lvTrace("LVAnimation(0x%p) Created.",this);
     }
 
-    LVAnimation(const lv_anim_t& anim)
+    virtual ~LVAnimation()
     {
-        memcpy(this,&anim,sizeof(lv_anim_t));
+        if(!class_ptr.deleted)
+        {
+            class_ptr.deleted = true;
+            //首先清理掉在动画框架中的副本数据
+            lv_anim_del(this->var,NULL);
+        }
+
+        lvTrace("LVAnimation(0x%p) Destroyed.",this);
     }
 
-    LVAnimation(const LVAnimation& anim)
-    {
-        memcpy(this,&anim,sizeof(LVAnimation));
-    }
+    /**
+     * @brief check animation is vailed
+     * @return
+     */
+    bool isVaild();
 
-    //static LVAnimation * fromAnim(const lv_anim_t * anim)
-    //{
-    //    return (LVAnimation *) anim;
-    //    return new(anim) LVAnimation;
-    //}
-
-    ~LVAnimation()
-    {
-        //首先清理掉在动画框架中的副本数据
-        lv_anim_del(this->user_data,lvAnimationExecCallBackAgent);
-    }
+    /**
+     * @brief check animation is vailed animation instance
+     * @param obj
+     * @return
+     */
+    static bool isVaild(lv_anim_t * anim);
 
     /**
      * Init. the animation module
@@ -145,7 +162,7 @@ public:
     void setExecCallBack(LVAnimExecCallBack exec_cb)
     {
         m_exec_cb = exec_cb;
-        lv_anim_set_exec_cb(this,this,lvAnimationExecCallBackAgent);
+        lv_anim_set_exec_cb(this,this,execCallBackAgent);
     }
 
     /**
@@ -192,7 +209,7 @@ public:
     void setPathCallBack(const LVAnimPathCallBack& path_cb)
     {
         m_path_cb = path_cb;
-        lv_anim_set_path_cb(this,lvAnimationPathCallBackAgent);
+        lv_anim_set_path_cb(this,pathCallBackAgent);
     }
 
     /**
@@ -205,7 +222,7 @@ public:
         if(ready_cb.isStdFunc())
         {
             m_ready_cb = ready_cb;
-            lv_anim_set_ready_cb(this,(lv_anim_ready_cb_t)lvAnimationReadyCallBackAgent);
+            lv_anim_set_ready_cb(this,(lv_anim_ready_cb_t)readyCallBackAgent);
         }
         else
         {
@@ -252,49 +269,6 @@ public:
         lv_anim_clear_repeat(this);
     }
 
-    /**
-     * Set a user specific data for the animation
-     * @param a pointer to an initialized `lv_anim_t` variable
-     * @param user_data the user data
-     */
-    void setUserData(lv_anim_user_data_t user_data)
-    {
-        lv_anim_set_user_data(this,user_data);
-    }
-
-    /**
-     * Get the user data
-     * @param a pointer to an initialized `lv_anim_t` variable
-     * @return the user data
-     */
-    lv_anim_user_data_t getUserData()
-    {
-        return lv_anim_get_user_data(this);
-    }
-
-    /**
-     * Get pointer to the user data
-     * @param a pointer to an initialized `lv_anim_t` variable
-     * @return pointer to the user data
-     */
-    lv_anim_user_data_t * getUserDataPtr()
-    {
-        return lv_anim_get_user_data_ptr(this);
-    }
-
-    /**
-     * Create an animation
-     * @param a an initialized 'anim_t' variable. Not required after call.
-     */
-    static void create(lv_anim_t * a)
-    {
-        lv_anim_create(a);
-    }
-
-    void create()
-    {
-        lv_anim_create(this);
-    }
 
     /**
      * Delete an animation of a variable with a given animator function
@@ -421,7 +395,7 @@ public:
      *******************/
 
 
-    static void lvAnimationExecCallBackAgent(void * a, lv_anim_value_t value)
+    static void execCallBackAgent(void * a, lv_anim_value_t value)
     {
         LVAnimation * anim = (LVAnimation*)((lv_anim_t*)a);
         if(anim&&anim->m_exec_cb)
@@ -430,7 +404,7 @@ public:
         }
     }
 
-    static LVAnimValue lvAnimationPathCallBackAgent(const lv_anim_t * a)
+    static LVAnimValue pathCallBackAgent(const lv_anim_t * a)
     {
         LVAnimation * anim = (LVAnimation *)a;
         if(anim&&anim->m_path_cb)
@@ -440,7 +414,7 @@ public:
         return 0;
     }
 
-    static void lvAnimationReadyCallBackAgent(lv_anim_t * a)
+    static void readyCallBackAgent(lv_anim_t * a)
     {
         LVAnimation * anim = static_cast<LVAnimation *>(a);
         if(anim&&anim->m_ready_cb)
@@ -448,12 +422,6 @@ public:
             anim->m_ready_cb(anim);
         }
     }
-
-
-protected:
-    LVAnimExecCallBack       m_exec_cb;   /*Function to execute to animate*/
-    LVAnimPathCallBack       m_path_cb;   /*An array with the steps of animations*/
-    LVAnimReadyCallBack      m_ready_cb;  /*Call it when the animation is ready*/
 
 };
 
@@ -464,5 +432,3 @@ protected:
 #endif /*LV_USE_ANIMATION == 0*/
 
 #endif /*LVANIMATION_H*/
-
-

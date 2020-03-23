@@ -25,7 +25,6 @@
 /*Data of text area*/
 class LVTextArea
         : public LVObject
-        , public LVFakeMemHeader<lv_ta_ext_t>
         , public lv_ta_ext_t
 {
     LV_OBJECT(LVTextArea,lv_ta_create,lv_ta_ext_t)
@@ -49,7 +48,7 @@ public:
         LV_CURSOR_BLOCK, /**< Rectangle */
         LV_CURSOR_OUTLINE, /**< Outline around character */
         LV_CURSOR_UNDERLINE, /**< Horizontal line under character */
-        LV_CURSOR_HIDDEN = 0x08, /**< This flag can be ORed to any of the other values to temporarily hide the cursor */
+        LV_CURSOR_HIDDEN = 0x08, /**< this flag can be ORed to any of the other values to temporarily hide the cursor */
     };
 
     /**********************
@@ -187,7 +186,7 @@ public:
     /**
      * Set the alignment of the text area.
      * In one line mode the text can be scrolled only with `LV_LABEL_ALIGN_LEFT`.
-     * This function should be called if the size of text area changes.
+     * this function should be called if the size of text area changes.
      * @param ta pointer to a text are object
      * @param align the desired alignment from `lv_label_align_t`. (LV_LABEL_ALIGN_LEFT/CENTER/RIGHT)
      */
@@ -234,7 +233,7 @@ public:
      * @param ta pointer to a text area object
      * @param sb_mode the new mode from 'lv_page_sb_mode_t' enum
      */
-    void setScrollBarMode(LVPage::Modes mode)
+    void setScrollBarMode(LVPage::SBModes mode)
     {
         lv_ta_set_sb_mode(this, mode);
     }
@@ -266,7 +265,7 @@ public:
      * @param type which style should be set
      * @param style pointer to a style
      */
-    void setStyle(Styles type, const LVStyle * style)
+    void setStyle(const LVStyle * style,Styles type)
     {
         lv_ta_set_style(this,type,style);
     }
@@ -410,9 +409,9 @@ public:
      * @param ta pointer to a text area object
      * @return scrollbar mode from 'lv_page_sb_mode_t' enum
      */
-    LVPage::Modes getScrollBarMode()
+    LVPage::SBModes getScrollBarMode()
     {
-        return (LVPage::Modes)lv_ta_get_sb_mode(this);
+        return (LVPage::SBModes)lv_ta_get_sb_mode(this);
     }
 
     /**

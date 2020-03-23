@@ -27,7 +27,6 @@
 /*Data of arc*/
 class LVArc
         : public LVObject
-        , public LVFakeMemHeader<lv_arc_ext_t>
         , public lv_arc_ext_t
 {
     LV_OBJECT(LVArc,lv_arc_create,lv_arc_ext_t)

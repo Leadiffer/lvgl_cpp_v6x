@@ -24,7 +24,6 @@
  **********************/
 class LVContainer
         : public LVObject
-        , public LVFakeMemHeader<lv_cont_ext_t>
         , public lv_cont_ext_t
 {
     LV_OBJECT(LVContainer,lv_cont_create,lv_cont_ext_t)

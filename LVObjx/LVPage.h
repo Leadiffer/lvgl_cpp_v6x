@@ -25,21 +25,20 @@
  **********************/
 class LVPage
         : public LVObject
-        , public LVFakeMemHeader<lv_page_ext_t>
         , public lv_page_ext_t
 {
     LV_OBJECT(LVPage,lv_page_create,lv_page_ext_t)
 public:
 
     /** Scrollbar modes: shows when should the scrollbars be visible*/
-    enum Modes : lv_sb_mode_t
+    enum SBModes : lv_sb_mode_t
     {
-        MODE_OFF    = LV_SB_MODE_OFF   , /**< Never show scrollbars*/
-        MODE_ON     = LV_SB_MODE_ON    , /**< Always show scrollbars*/
-        MODE_DRAG   = LV_SB_MODE_DRAG  , /**< Show scrollbars when page is being dragged*/
-        MODE_AUTO   = LV_SB_MODE_AUTO  , /**< Show scrollbars when the scrollable container is large enough to be scrolled*/
-        MODE_HIDE   = LV_SB_MODE_HIDE  , /**< Hide the scroll bar temporally*/
-        MODE_UNHIDE = LV_SB_MODE_UNHIDE, /**< Unhide the previously hidden scrollbar. Recover it's type too*/
+        SB_MODE_OFF    = LV_SB_MODE_OFF   , /**< Never show scrollbars*/
+        SB_MODE_ON     = LV_SB_MODE_ON    , /**< Always show scrollbars*/
+        SB_MODE_DRAG   = LV_SB_MODE_DRAG  , /**< Show scrollbars when page is being dragged*/
+        SB_MODE_AUTO   = LV_SB_MODE_AUTO  , /**< Show scrollbars when the scrollable container is large enough to be scrolled*/
+        SB_MODE_HIDE   = LV_SB_MODE_HIDE  , /**< Hide the scroll bar temporally*/
+        SB_MODE_UNHIDE = LV_SB_MODE_UNHIDE, /**< Unhide the previously hidden scrollbar. Recover it's type too*/
     };
 
     /** Edges: describes the four edges of the page*/
@@ -109,7 +108,7 @@ public:
      * @param page pointer to a page object
      * @param sb_mode the new mode from 'lv_page_sb.mode_t' enum
      */
-    void setScrollBarMode(lv_sb_mode_t sb_mode)
+    void setScrollBarMode(SBModes sb_mode)
     {
         lv_page_set_sb_mode(this,sb_mode);
     }
@@ -218,7 +217,7 @@ public:
      * @param type which style should be set
      * @param style pointer to a style
      */
-    void setStyle(Styles type, const LVStyle * style)
+    void setStyle(const LVStyle * style,Styles type)
     {
         lv_page_set_style(this,type,style);
     }
@@ -232,9 +231,9 @@ public:
      * @param page pointer to a page object
      * @return the mode from 'lv_page_sb.mode_t' enum
      */
-    Modes getScrollBarMode()
+    SBModes getScrollBarMode()
     {
-        return (Modes)lv_page_get_sb_mode(this);
+        return (SBModes)lv_page_get_sb_mode(this);
     }
 
     /**
@@ -389,7 +388,7 @@ public:
      * @param obj pointer to an object to focus (must be on the page)
      * @param anim_en LV_ANIM_ON to focus with animation; LV_ANIM_OFF to focus without animation
      */
-    void focus(const lv_obj_t * obj, lv_anim_enable_t anim_en)
+    void focus(const lv_obj_t * obj, lv_anim_enable_t anim_en = LV_ANIM_OFF)
     {
         lv_page_focus(this,obj,anim_en);
     }

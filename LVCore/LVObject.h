@@ -21,14 +21,16 @@
 #include "LVStyle.h"
 
 class LVDisplay;
+class LVObject;
 
 /*********************
  *      DEFINES
  *********************/
 
+#define INHERIT_OBJ //使用继承方式实现object
+
 //使用智能指针
 #define LV_USE_POINTER 1
-
 #if LV_USE_POINTER >= 1
 class LVPointerBase;
 #endif
@@ -49,7 +51,43 @@ public:
 class LVObjectType : public lv_obj_type_t
 {
 public:
-    LVObjectType() {}
+    LVObjectType() { type[0] = nullptr; }
+
+    /**
+     * @brief size
+     * @return
+     */
+    uint32_t size()
+    {
+        for (int i = 0; i < LV_MAX_ANCESTOR_NUM; ++i)
+        {
+            if( type[i] == nullptr )
+                return i;
+        }
+        return LV_MAX_ANCESTOR_NUM;
+    }
+
+    /**
+     * @brief getType
+     * @param index
+     * @return
+     */
+    const char * getType(int index = -1)
+    {
+        if(index >= LV_MAX_ANCESTOR_NUM)
+        {
+            return nullptr;
+        }
+        else if(index == -1)
+        {
+            return type[size()-1];
+        }
+        else
+        {
+            return type[index];
+        }
+    }
+
 };
 
 // 禁止对象的拷贝和赋值操作
@@ -69,32 +107,28 @@ public:
     virtual lv_event_cb_t & ancestorEventCB()override \
     { static lv_event_cb_t l_evenCB = nullptr; return l_evenCB; }
 
-// 定义一个派生类的默认构造函数
-/*
-    virtual void destroyer() override \
-    { \
-        lv_mem_free(this);  \
-        LV_LOG_INFO(#CLASS" destroyed."); \
-    } \
-*/
-
 #define LV_OBJX(CLASS,FUNC,ATTR) \
     protected: \
     CLASS(){} \
-    virtual uint32_t creator(LVObject * par, const LVObject * copy) override \
-    { \
-        LVMemory::placementAlloc((lv_obj_t*)this,(ATTR*)this); \
-        FUNC(par,copy); \
-        LVMemory::resetPlacementAlloc(); \
-        if(ext_attr != (ATTR*)this) lvError(#CLASS"::creator : ext_attr(%p) != "#ATTR"(%p)",ext_attr,(ATTR*)this); \
-        callbackInit();\
-        LV_LOG_INFO(#CLASS" created."); \
-        return sizeof(ATTR); \
-    } \
     public: \
-    CLASS(LVObject* parent,const CLASS* copy = nullptr){creator(parent,copy);} \
-    ~CLASS(){destroyer();} \
+    CLASS(LVObject* parent,const CLASS* copy = nullptr) \
+    { \
+        LVMemory::setNewObjectAddr(static_cast<lv_obj_t*>(this),static_cast<ATTR*>(this)); \
+        FUNC(parent,copy); \
+        class_ptr.full = this; \
+        class_ptr.deleted = false; \
+        LVMemory::unsetNewObjectAddr(); \
+        if(ext_attr != static_cast<ATTR*>(this))  \
+            lvError(#CLASS": ext_attr(0x%p) != "#ATTR"(0x%p)",ext_attr,static_cast<ATTR*>(this)); \
+        initAncestorCB();\
+        lvInfo(#CLASS"(0x%p) created.",this); \
+    } \
+    ~CLASS() \
+    { \
+        lvInfo(#CLASS"(%p) destroyed.",this); \
+    } \
     private:
+
 
 // implement object`s comment attribute
 // 必须将这个宏放在派生类中的第一行
@@ -189,6 +223,8 @@ enum AlignType : lv_align_t
     ALIGN_OUT_RIGHT_TOP    = LV_ALIGN_OUT_RIGHT_TOP,
     ALIGN_OUT_RIGHT_MID    = LV_ALIGN_OUT_RIGHT_MID,
     ALIGN_OUT_RIGHT_BOTTOM = LV_ALIGN_OUT_RIGHT_BOTTOM,
+
+    ALIGN_NONE             = 0xFF
 };
 
 enum DragDirection : lv_drag_dir_t
@@ -213,25 +249,72 @@ enum ProtectType : lv_protect_t
 };
 
 
-
 class LVObject;
 using LVDesignCallBack = LVCallBack<bool(LVObject * obj, const LVArea * mask_p, DesignMode mode),bool>;
 using LVSignalCallBack = LVCallBack<LVResult(LVObject * obj, SignalType sign, void * param),LVResult>;
-using LVEventCallBack = LVCallBack<void(LVObject * obj, EventType event),void>;
+using LVEventCallBack  = LVCallBack<void(LVObject * obj, EventType event),void>;
 
+
+template <typename T>
+class GetType
+{
+public:
+   typedef T type;
+   typedef T& type_ref;
+   typedef T* type_pointer;
+};
+
+template<typename T>
+class GetType<T&>
+{
+public:
+   typedef typename std::remove_reference<T>::type type;
+   typedef typename std::remove_reference<T&>::type type_ref;
+   typedef typename std::remove_reference<T*>::type type_pointer;
+};
+
+template<typename T>
+class GetType<T*>
+{
+public:
+   typedef typename std::remove_reference<T>::type type;
+   typedef typename std::remove_reference<T&>::type type_ref;
+   typedef typename std::remove_reference<T*>::type type_pointer;
+};
 
 /**
- * @brief LVObject的扩展数据成员
- * 由于要配合lvgl的内存布局,所以扩展数据都放在单独的数据类中
+ * @brief lvobject_cast 类型指针转换函数
+ * @param lv_obj
+ * @param fake 为原生对象伪造一个对象指针
+ * @return
  */
-class LVObjectEnhance
+template <class Obj_Ptr>
+Obj_Ptr lvobject_cast(lv_obj_t * obj, bool fake = false)
 {
-protected:
-    LVObjectEnhance()
-    {
-        m_destructByDelete = 0;
-    }
+    //(void)fake;
+    typedef typename GetType<Obj_Ptr>::type Obj_type;
+    //typedef typename std::remove_reference<Obj_Ptr>::type Obj_type;
+    if(fake || Obj_type::isVaild(obj) )
+        return static_cast<Obj_Ptr>(obj);
+    else
+        return nullptr;
+}
 
+/**
+ * @brief The LVObject class
+ * //NOTE: 禁止LVObject在栈上建立对象,
+ * 虽然可以禁止外界访问析构函数,但是使用起来太不方便了,
+ * 就靠编程人员来记住这个原则吧
+ */
+
+class LVObject
+        : public lv_obj_t       //!< 实际的lvObj 对象数据
+        , public LVLLNodeMeta<lv_obj_t>  //!< lvObj在链表中的元数据
+{
+    LV_MEMORY
+    LV_NOCOPY(LVObject)
+
+protected:
 #if LV_USE_POINTER
     /**
      * @brief 智能指针对象数组
@@ -241,95 +324,29 @@ protected:
     LVPointerBase ** m_pointers = nullptr;
 #endif
 
-    LVDesignCallBack m_designCallback;
-    LVSignalCallBack m_signalCallback;
-    LVEventCallBack  m_eventCallback;
-
-    struct
-    {
-        uint32_t m_destructByDelete:1; //!< 是否被delete操作符清理的
-        uint32_t _reserve_:31; //!< 保留
-    };
-};
-
-/**
- * @brief lv_obj_t 在lvll中的数据节点
- */
-class LVObjectNode
-        : public lv_obj_t       //!< 实际的lvObj 对象数据
-        , public LVLLNodeMeta  //!< lvObj在链表中的元数据
-{
-protected:
-    LVObjectNode() {}
-};
-
-
-/**
- * @brief The LVObject class
- * //NOTE: 禁止LVObject在栈上建立对象,
- * 虽然可以禁止外界访问析构函数,但是使用起来太不方便了,
- * 就靠编程人员来记住这个原则吧
- *
- * LVObject 内存布局
- *                 LVObject                       LVObjectNode         lv_obj_t
- *                 |                              |                    |
- *                 V                              V                    V
- * {LVMemoryHeader:[ (VTable){LVMemoryHeader:[ (lv_obj_t) (LVLLNodeMeta) (LVObjectEnhance) ] } (LVMemoryHeader) ] }
- */
-class LVObject
-        : public LVObjectEnhance //!< lvgl的扩展属性,放在类继承的第一位
-        , public LVFakeMemHeader<LVObjectNode>  //!< LVObjectNode 的假内存块信息,模拟lvgl的内存布局
-        , public LVObjectNode   //!< lvObj的数据节点
-{
-    LV_MEMORY
-    LV_NOCOPY(LVObject)
+    LVDesignCallBack m_designCallback; //!< 设计回调
+    LVSignalCallBack m_signalCallback; //!< 信号回调
+    LVEventCallBack  m_eventCallback;  //!< 事件回调
 
 protected:
-
     //给派生类调用
     LVObject()
+        :m_pointers(nullptr)
     {
-        //初始化隐形的 LVMemoryHeader
-        LVMemoryEntry * ent = LVMemory::getMemoryEntry(this);
-        //虚表指针,再加上LVObjectEnhance的大小
-        ent->setSize( (uintptr_t)((LVFakeMemHeader<LVObjectNode>*)this) - (uintptr_t)this );
+        //绑定对象
+        lvInfo("LVObject(0x%p) created.",this);
     }
 
-    virtual uint32_t creator(LVObject * par, const LVObject * copy)
-    {
-        LVMemory::placementAlloc((lv_obj_t*)this);
-        lv_obj_create(par,copy);
-        LVMemory::resetPlacementAlloc();
-        //记录先祖回调函数
-        callbackInit();
-        LV_LOG_INFO("LVObject created.");
-        return 0;
-    }
-
-    virtual void destroyer()
-    {
-        if(isDestructByDelete()) return;
-        setDestructByDelete();
-        resetAncestorCB();
-
-        onSignalCleanUp();
-        lv_obj_del(this);
-    #if LV_USE_POINTER
-        //清理智能指针
-        cleanPointers();
-    #endif
-
-        LV_LOG_INFO("LVObject destroyed.");
-    }
-
+    //记录先祖的回调函数
     virtual lv_design_cb_t & ancestorDesignCB()
-    { static lv_design_cb_t l_designCB = nullptr; return l_designCB; }
+    { static lv_design_cb_t lv_design_cb = nullptr; return lv_design_cb; }
 
     virtual lv_signal_cb_t & ancestorSignalCB()
-    { static lv_signal_cb_t l_signalCB = nullptr; return l_signalCB; }
+    { static lv_signal_cb_t lv_signal_cb = nullptr; return lv_signal_cb; }
 
     virtual lv_event_cb_t & ancestorEventCB()
-    { static lv_event_cb_t l_evenCB = nullptr; return l_evenCB; }
+    { static lv_event_cb_t lv_even_cb = nullptr; return lv_even_cb; }
+
 public:
 
     /**********************
@@ -358,9 +375,12 @@ public:
     LVObject(LVObject * parent, const LVObject * copy = nullptr)
         :LVObject()
     {
-        //NOTE:此时调用虚拟函数,由于派生类并未初始化好,永远只会调用基类的抽象函数
-        //NOTE: 在构造函数中调用虚函数是禁忌
-        creator(parent,copy);
+        LVMemory::setNewObjectAddr(static_cast<lv_obj_t*>(this)) ;
+        lv_obj_create(parent,copy);
+        class_ptr.full = this;
+        class_ptr.deleted = false;
+        LVMemory::unsetNewObjectAddr();
+        initAncestorCB();//记录先祖回调函数
     }
 
     /**
@@ -370,11 +390,43 @@ public:
      */
     virtual ~LVObject()
     {
-        //NOTE: 此时调用虚拟函数,由于派生类已经析构了,永远只会调用基类的抽象函数
-        //NOTE: 在析构函数中调用虚函数是禁忌
-        //NOTE: 在对象清理的过程中,会调用到虚函数
-        destroyer();
+
+#if LV_USE_POINTER
+        //清理智能指针
+        cleanPointers();
+#endif
+        if(!class_ptr.deleted)
+        {
+            class_ptr.deleted = true;
+            lv_obj_del(this);
+        }
+        lvInfo("LVObject(0x%p) destroyed.",this);
     }
+
+    /**
+     * Helper function for asynchronously deleting objects.
+     * Useful for cases where you can't delete an object directly in an `LV_EVENT_DELETE` handler (i.e. parent).
+     * @param obj object to delete
+     * @see lv_async_call
+     */
+    void delleteAsync()
+    {
+        lv_obj_del_async(this);
+    }
+
+
+    /**
+     * @brief check object is vailed
+     * @return
+     */
+    bool isVaild();
+
+    /**
+     * @brief check obj is vailed object instance
+     * @param obj
+     * @return
+     */
+    static bool isVaild(lv_obj_t * obj);
 
     /**
      * Delete all children of an object
@@ -409,7 +461,7 @@ public:
      */
     void setParent(LVObject * parent)
     {
-        lv_obj_set_parent(this, parent);
+        lv_obj_set_parent(this,parent);
     }
 
     /**
@@ -440,7 +492,7 @@ public:
      * @param x new distance from the left side of the parent
      * @param y new distance from the top of the parent
      */
-    void setPos(LVCoord x, LVCoord y)
+    void setPosition(LVCoord x, LVCoord y)
     {
         lv_obj_set_pos(this,x,y);
     }
@@ -524,7 +576,7 @@ public:
      */
     void alignOrigo(const LVObject * base, AlignType align, LVCoord x_mod = 0, LVCoord y_mod = 0)
     {
-        lv_obj_align_origo(this, base, align, x_mod,y_mod);
+        lv_obj_align_origo(this,base, align, x_mod,y_mod);
     }
 
     void alignOrigo(AlignType align, LVCoord x_mod = 0, LVCoord y_mod = 0)
@@ -748,7 +800,7 @@ public:
     void setEventCallBack(LVEventCallBack event_cb)
     {
         m_eventCallback = event_cb;
-        lv_obj_set_event_cb(this,(lv_event_cb_t)lvObjectEvenCallBackAgency);
+        lv_obj_set_event_cb(this,(lv_event_cb_t)evenCallBackAgency);
     }
 
     /**
@@ -794,7 +846,7 @@ public:
     void setSignalCallBack(LVSignalCallBack signal_cb)
     {
         m_signalCallback = signal_cb;
-        lv_obj_set_signal_cb(this,(lv_signal_cb_t)lvObjectSignalCallBackAgency);
+        lv_obj_set_signal_cb(this,(lv_signal_cb_t)signalCallBackAgency);
     }
     //void setSignalCallBack(lv_signal_cb_t signal_cb)
     //{
@@ -819,7 +871,7 @@ public:
     void setDesignCallBack(LVDesignCallBack design_cb)
     {
         m_designCallback = design_cb;
-        lv_obj_set_design_cb(this,(lv_design_cb_t)lvObjectDesignCallBackAgency);
+        lv_obj_set_design_cb(this,(lv_design_cb_t)designCallBackAgency);
     }
     //void setDesignCallBack(lv_design_cb_t design_cb)
     //{
@@ -861,7 +913,7 @@ public:
      */
     LVObject * getScreen()
     {
-        return (LVObject *)lv_obj_get_screen(this);
+        return lvobject_cast<LVObject*>(lv_obj_get_screen(this),true);
     }
 
     /**
@@ -885,7 +937,7 @@ public:
      */
     LVObject * getParent()
     {
-        return (LVObject *)lv_obj_get_parent(this);
+        return lvobject_cast<LVObject*>(lv_obj_get_parent(this),true);
     }
 
     /**
@@ -897,7 +949,7 @@ public:
      */
     LVObject * getChild(const LVObject * child)
     {
-        return (LVObject *)lv_obj_get_child(this,child);
+        return lvobject_cast<LVObject*>(lv_obj_get_child(this,child),true);
     }
 
     /**
@@ -909,7 +961,7 @@ public:
      */
     LVObject * getChildBack(const LVObject * child)
     {
-        return (LVObject *)lv_obj_get_child_back(this,child);
+        return lvobject_cast<LVObject*>(lv_obj_get_child_back(this,child),true);
     }
 
     /**
@@ -1017,38 +1069,45 @@ public:
         return lv_obj_get_auto_realign(this);
     }
 
-
-    #if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_TINY
     /**
-     * Get the horizontal padding of extended clickable area
+     * Get the left padding of extended clickable area
      * @param obj pointer to an object
-     * @return the horizontal padding
+     * @return the extended left padding
      */
-    uint8_t lv_obj_get_ext_click_pad_hor(const lv_obj_t * obj);
-
-    /**
-     * Get the vertical padding of extended clickable area
-     * @param obj pointer to an object
-     * @return the vertical padding
-     */
-    uint8_t getExtClickPadVer()
+    LVCoord getExtendedClickPadLeft()
     {
-        return lv_obj_get_ext_click_pad_ver(this);
+        return lv_obj_get_ext_click_pad_left(this);
     }
 
-    #endif
-
-    #if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_FULL
     /**
-     * Get the horizontal padding of extended clickable area
+     * Get the right padding of extended clickable area
      * @param obj pointer to an object
-     * @return the horizontal padding
+     * @return the extended right padding
      */
-    const LVArea * getExtClickPad()
+    LVCoord getExtendedClickPadRight()
     {
-        return lv_obj_get_ext_click_pad(this);
+        return lv_obj_get_ext_click_pad_right(this);
     }
-    #endif
+
+    /**
+     * Get the top padding of extended clickable area
+     * @param obj pointer to an object
+     * @return the extended top padding
+     */
+    LVCoord getExtendedClickPadTop()
+    {
+        return lv_obj_get_ext_click_pad_top(this);
+    }
+
+    /**
+     * Get the bottom padding of extended clickable area
+     * @param obj pointer to an object
+     * @return the extended bottom padding
+     */
+    LVCoord getExtendedClickPadBottom()
+    {
+        return lv_obj_get_ext_click_pad_bottom(this);
+    }
 
     /**
      * Get the extended size attribute of an object
@@ -1255,7 +1314,14 @@ public:
         lv_obj_get_type(this, buf);
     }
 
-    #if LV_USE_USER_DATA
+    const char* getType(int index = -1)
+    {
+        LVObjectType types;
+        getType(&types);
+        return types.getType(index);
+    }
+
+#if LV_USE_USER_DATA
     /**
      * Get the object's user data
      * @param obj pointer to an object
@@ -1286,9 +1352,9 @@ public:
         lv_obj_set_user_data(this, data);
     }
 
-    #endif
+#endif
 
-    #if LV_USE_GROUP
+#if LV_USE_GROUP
     /**
      * Get the group of the object
      * @param obj pointer to an object
@@ -1309,7 +1375,30 @@ public:
         return lv_obj_is_focused(this);
     }
 
-    #endif
+#endif
+
+    /**
+     * Make a object active on screen
+     */
+    void loadScreen();
+
+
+    /**
+     * @brief set obj Size to Fill in parent
+     */
+    void setSizeFill(LVCoord hor_margin = 0, LVCoord ver_margin = 0)
+    {
+        auto p = getParent();
+        setSize(p->getWidth()-hor_margin*2,p->getHeight()-ver_margin*2);
+        align(ALIGN_CENTER);
+    }
+
+    void setSizeFill(LVCoord top_margin , LVCoord botton_margin ,LVCoord left_margin , LVCoord right_margin )
+    {
+        auto p = getParent();
+        setSize(p->getWidth()-left_margin-right_margin,p->getHeight()-top_margin-botton_margin);
+        align(ALIGN_CENTER,left_margin-right_margin,top_margin-botton_margin);
+    }
 
 #if LV_USE_POINTER
 
@@ -1349,143 +1438,26 @@ protected:
     }
 protected:
     /**
-     * @brief 初始化回调函数
+     * @brief 初始化默认回调函数
      */
-    void callbackInit()
+    void initAncestorCB();
+
+    void resetDesignCB();
+    void resetSignalCB();
+    void resetEventCB();
+
+    void resetAncestorCB();
+
+    static bool designCallBackAgency(struct _lv_obj_t * obj, const lv_area_t * mask_p, lv_design_mode_t mode);
+    static lv_res_t signalCallBackAgency(struct _lv_obj_t * obj, lv_signal_t sign, void * param);
+    static void evenCallBackAgency(struct _lv_obj_t * obj, lv_event_t event);
+
+    /**
+     * @brief onDelete 当对象被清理时调用的虚函数
+     */
+    virtual void onDelete()
     {
-        //记住类对象的先祖属性
-        if(ancestorDesignCB() == nullptr) ancestorDesignCB() = lv_obj_get_design_cb(this);
-        if(ancestorSignalCB() == nullptr) ancestorSignalCB() = lv_obj_get_signal_cb(this);
-        if(ancestorEventCB() == nullptr) ancestorEventCB() = lv_obj_get_event_cb(this);
-
-        //替换回调函数
-        lv_obj_set_signal_cb(this,(lv_signal_cb_t)lvObjectSignalCallBackAgency);
-    }
-
-    void resetDesignCB()
-    {
-        lv_obj_set_design_cb(this,ancestorDesignCB());
-    }
-    void resetSignalCB()
-    {
-        lv_obj_set_signal_cb(this,ancestorSignalCB());
-    }
-    void resetEventCB()
-    {
-        lv_obj_set_event_cb(this,ancestorEventCB());
-    }
-
-    void resetAncestorCB()
-    {
-        resetDesignCB();
-        resetSignalCB();
-        resetEventCB() ;
-    }
-
-
-    //析构函数是否在运行过
-    bool isDestructByDelete()
-    {
-        return m_destructByDelete == 1;
-    }
-
-    void setDestructByDelete(bool value = true)
-    {
-        m_destructByDelete = value?1:0;
-    }
-
-    void resetDestructByDelete()
-    {
-        setDestructByDelete(false);
-    }
-
-    virtual void onSignalCleanUp()
-    {
-
-    }
-
-
-    static bool lvObjectDesignCallBackAgency(struct _lv_obj_t * obj, const lv_area_t * mask_p, lv_design_mode_t mode)
-    {
-        LVObject * lvObj = (LVObject*)obj;
-        if(lvObj == nullptr)
-        {
-            lvError("lvObjectDesignCallBackAgency : LVObject is nullptr !");
-            return false;
-        }
-
-        if(lvObj->m_designCallback)
-        {
-            return lvObj->m_designCallback(lvObj,(LVArea*)mask_p,DesignMode(mode));
-        }
-        else
-        {
-            lvError( "lvObjectDesignCallBackAgency : LVObject->m_designCallback is not set yet ! call default Design callback.");
-            return (*lvObj->ancestorDesignCB())(obj,mask_p,mode);
-        }
-    }
-
-
-    static lv_res_t lvObjectSignalCallBackAgency(struct _lv_obj_t * obj, SignalType sign, void * param)
-    {
-        LVObject * lvObj = (LVObject*)obj;
-        if(lvObj == nullptr)
-        {
-            lvError("lvObjectSignalCallBackAgency : LVObject is nullptr !");
-            return LV_RES_OK;
-        }
-
-        lv_res_t ret = LV_RES_OK;
-
-        if(lvObj->m_signalCallback)
-        {
-            ret =  lvObj->m_signalCallback(lvObj,sign,param);
-        }
-        else
-        {
-            lvTrace("lvObjectSignalCallBackAgency : LVObject->m_SignalCallback is not set yet ! default signal callback.");
-            ret = (*lvObj->ancestorSignalCB())(obj,sign,param);
-        }
-
-        if(sign == SIGNAL_CLEANUP)
-        {
-            //清理数据
-            lvInfo("lvObjectSignalCallBackAgency : LV_SIGNAL_CLEANUP ");
-
-            lvObj->onSignalCleanUp();
-        #if LV_USE_POINTER
-            //清理智能指针
-            lvObj->cleanPointers();
-        #endif
-
-            //清理回调函数信息
-            lvObj->cleanCallBacks();
-            //释放LVObject实例对象的内存
-            LVMemory::free(lvObj);
-
-            LV_LOG_INFO("LVObject destroyed.");
-        }
-
-        return ret;
-    }
-
-    static void lvObjectEvenCallBackAgency(struct _lv_obj_t * obj, EventType event)
-    {
-        LVObject * lvObj = (LVObject*)obj;
-        if(lvObj == nullptr)
-        {
-            lvError("lvObjectEvenCallBackAgency : LVObject is nullptr !");
-        }
-
-        if(lvObj->m_eventCallback)
-        {
-            lvObj->m_eventCallback(lvObj,event);
-        }
-        else
-        {
-            lvError("lvObjectEvenCallBackAgency : LVObject->m_eventCallback is not set yet ! call ancestor Event callback.");
-            (lvObj->ancestorEventCB())(obj,event);
-        }
+        //子类去实现函数的具体功能
     }
 
 };

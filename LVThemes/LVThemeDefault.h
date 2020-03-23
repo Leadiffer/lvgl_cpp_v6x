@@ -38,7 +38,7 @@ public:
      * @param font pointer to a font (NULL to use the default)
      * @return pointer to the initialized theme
      */
-    static LVThemeDefault * init(uint16_t hue, lv_font_t * font)
+    static LVThemeDefault * init(uint16_t hue, lv_font_t * font = nullptr)
     {
         return (LVThemeDefault *)lv_theme_default_init(hue, font);
     }

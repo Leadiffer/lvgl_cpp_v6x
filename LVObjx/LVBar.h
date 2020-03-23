@@ -26,7 +26,6 @@
 /** Data of bar*/
 class LVBar
         : public LVObject
-        , public LVFakeMemHeader<lv_bar_ext_t>
         , public lv_bar_ext_t
 {
 
@@ -63,7 +62,7 @@ public:
      * @param value new value
      * @param anim LV_ANIM_ON: set the value with an animation; LV_ANIM_OFF: change the value immediately
      */
-    void setValue(int16_t value, lv_anim_enable_t anim)
+    void setValue(int16_t value, lv_anim_enable_t anim = LV_ANIM_OFF)
     {
         lv_bar_set_value(this,value,anim);
     }

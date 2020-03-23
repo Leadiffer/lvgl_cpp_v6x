@@ -27,7 +27,6 @@
 
 class LVCanvas
         : public LVObject
-        , public LVFakeMemHeader<lv_canvas_ext_t>
         , public lv_canvas_ext_t
 {
     LV_OBJECT(LVCanvas,lv_canvas_create,lv_canvas_ext_t)

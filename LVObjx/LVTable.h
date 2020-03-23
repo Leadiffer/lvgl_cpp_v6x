@@ -49,7 +49,6 @@ public:
 /*Data of table*/
 class LVTable
         : public LVObject
-        , public LVFakeMemHeader<lv_table_ext_t>
         , public lv_table_ext_t
 {
     LV_OBJECT(LVTable,lv_table_create,lv_table_ext_t)
@@ -179,7 +178,7 @@ public:
      * @param type which style should be set
      * @param style pointer to a style
      */
-    void setStyle(Styles type, const LVStyle * style)
+    void setStyle(const LVStyle * style,Styles type)
     {
         lv_table_set_style(this,type,style);
     }

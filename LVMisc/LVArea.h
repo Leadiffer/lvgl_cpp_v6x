@@ -27,6 +27,8 @@ class LVPoint : public lv_point_t
 {
     LV_MEMORY
 public:
+    static const LVPoint none;
+
     LVPoint(LVCoord x = LV_COORD_MIN,LVCoord y = LV_COORD_MIN)
     {
         this->x = x;
@@ -49,9 +51,9 @@ public:
      *      ENHANCE
      **********************/
 
-    bool isNull() const
+    bool isValid() const
     {
-        return x==LV_COORD_MIN && y ==LV_COORD_MIN;
+        return x!=LV_COORD_MIN || y !=LV_COORD_MIN;
     }
 
     LVPoint & operator =(const LVPoint & p2 ) { this->x = p2.x ; this->y = p2.y; return *this; }
@@ -99,6 +101,8 @@ class LVArea : public lv_area_t
     LV_MEMORY
 public:
 
+    static const LVArea none;
+
     /**********************
      * GLOBAL PROTOTYPES
      **********************/
@@ -111,7 +115,7 @@ public:
      * @param x2 right coordinate of the area
      * @param y2 bottom coordinate of the area
      */
-    LVArea(LVCoord x1 = 0, LVCoord y1 = 0, LVCoord x2 = 0, LVCoord y2 = 0)
+    LVArea(LVCoord x1 = LV_COORD_MIN, LVCoord y1 = LV_COORD_MIN, LVCoord x2 = LV_COORD_MIN, LVCoord y2 = LV_COORD_MIN)
     {
         this->x1 = x1;
         this->y1 = y1;
@@ -293,7 +297,20 @@ public:
     {
         return x1==x2 || y1 == y2;
     }
+
+    friend inline bool operator==(const LVArea &a1, const LVArea &a2);
+    friend inline bool operator!=(const LVArea &a1, const LVArea &a2);
 };
+
+
+inline bool operator==(const LVArea &a1, const LVArea &a2)
+{
+    return a1.x1 == a2.x1 && a1.x2 == a2.x2 && a1.y1 == a2.y1 && a1.y2 == a2.y2;
+}
+inline bool operator!=(const LVArea &a1, const LVArea &a2)
+{
+    return a1.x1 != a2.x1 || a1.x2 != a2.x2 || a1.y1 != a2.y1 || a1.y2 != a2.y2;
+}
 
 /**********************
  *      MACROS

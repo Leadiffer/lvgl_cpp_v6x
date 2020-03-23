@@ -138,7 +138,7 @@ public:
         return *this;
     }
 
-    LVPointer<T>& operator =(const T * obj)
+    LVPointer<T>& operator =(T * obj)
     {
         if(m_obj != obj)
             setObject(obj);
@@ -147,12 +147,15 @@ public:
 
     operator T *() const
     {
-        return (T*)m_obj;
+        return static_cast<T*>(m_obj);
     }
+
+    T* get() const
+    { return static_cast<T*>(m_obj);}
 
     T & operator*() const
     {
-        return *((T*)m_obj);
+        return *(static_cast<T*>(m_obj));
     }
 
     operator bool()
@@ -162,7 +165,13 @@ public:
 
     T * operator->() const
     {
-        return (T*)m_obj;
+        return static_cast<T*>(m_obj);
+    }
+
+    void reset(T* p = nullptr)
+    {
+        if(m_obj != p)
+            setObject(p);
     }
 };
 

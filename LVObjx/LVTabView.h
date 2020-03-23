@@ -26,7 +26,6 @@
 /*Data of tab*/
 class LVTabView
         : public LVObject
-        , public LVFakeMemHeader<lv_tabview_ext_t>
         , public lv_tabview_ext_t
 {
     LV_OBJECT(LVTabView,lv_tabview_create,lv_tabview_ext_t)
@@ -98,7 +97,7 @@ public:
      * @param id index of a tab to load
      * @param anim LV_ANIM_ON: set the value with an animation; LV_ANIM_OFF: change the value immediately
      */
-    void setTabAct(uint16_t id, lv_anim_enable_t anim)
+    void setTabAct(uint16_t id, lv_anim_enable_t anim = LV_ANIM_OFF)
     {
         lv_tabview_set_tab_act(this,id,anim);
     }
@@ -129,7 +128,7 @@ public:
      * @param type which style should be set
      * @param style pointer to the new style
      */
-    void setStyle(lv_tabview_style_t type, const lv_style_t * style)
+    void setStyle(const lv_style_t * style,Styles type)
     {
         lv_tabview_set_style(this,type,style);
     }

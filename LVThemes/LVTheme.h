@@ -56,7 +56,7 @@ public:
      */
     static LVTheme * getCurrent(void)
     {
-        return (LVTheme *)lv_theme_get_current();
+        return static_cast<LVTheme *>(lv_theme_get_current());
     }
 
 };

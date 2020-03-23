@@ -25,7 +25,6 @@
 /*Data of line meter*/
 class LVLineMeter
         : public LVObject
-        , public LVFakeMemHeader<lv_lmeter_ext_t>
         , public lv_lmeter_ext_t
 {
     LV_OBJECT(LVLineMeter,lv_lmeter_create,lv_lmeter_ext_t)
@@ -34,7 +33,7 @@ public:
     /*Styles*/
     enum Styles : lv_lmeter_style_t
     {
-        LV_LMETER_STYLE_MAIN,
+        STYLE_MAIN,
     };
 
     /**********************
@@ -92,7 +91,7 @@ public:
      * @param type which style should be set (can be only `LV_LMETER_STYLE_MAIN`)
      * @param style set the style of the line meter
      */
-    void setStyle(Styles type, LVStyle * style)
+    void setStyle(const LVStyle * style,Styles type = STYLE_MAIN)
     {
         lv_lmeter_set_style(this, type, style);
     }

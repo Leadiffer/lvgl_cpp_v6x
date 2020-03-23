@@ -210,7 +210,7 @@
      */
     LVObject * getObjectActived(void)
     {
-        return (LVObject *)lv_indev_get_obj_act();
+        return lvobject_cast<LVObject*>(lv_indev_get_obj_act(),true);
     }
 
 

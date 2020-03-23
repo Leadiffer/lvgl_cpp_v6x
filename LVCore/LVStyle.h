@@ -48,73 +48,6 @@ class LVStyle : public lv_style_t
 {
     LV_MEMORY
 
-    struct Private
-    {
-        uint8_t glass : 1; /**< 1: Do not inherit this style*/
-
-        /** Object background. */
-        struct
-        {
-            LVColor main_color; /**< Object's main background color. */
-            LVColor grad_color; /**< Second color. If not equal to `main_color` a gradient will be drawn for the background. */
-            LVCoord radius; /**< Object's corner radius. You can use #LV_RADIUS_CIRCLE if you want to draw a circle. */
-            LVOpacity opa; /**< Object's LVOpacity (0-255). */
-
-            struct
-            {
-                LVColor color; /**< Border color */
-                LVCoord width; /**< Border width */
-                BorderPart part; /**< Which borders to draw */
-                LVOpacity opa; /**< Border LVOpacity. */
-            } border;
-
-
-            struct
-            {
-                LVColor color;
-                LVCoord width;
-                ShadowType type; /**< Which parts of the shadow to draw */
-            } shadow;
-
-            struct
-            {
-                LVCoord top;
-                LVCoord bottom;
-                LVCoord left;
-                LVCoord right;
-                LVCoord inner;
-            } padding;
-        } body;
-
-        /** Style for text drawn by this object. */
-        struct
-        {
-            LVColor color; /**< Text color */
-            LVColor sel_color; /**< Text selection background color. */
-            const LVFont * font;
-            LVCoord letter_space; /**< Space between letters */
-            LVCoord line_space; /**< Space between lines (vertical) */
-            LVOpacity opa; /**< Text LVOpacity */
-        } text;
-
-        /**< Style of images. */
-        struct
-        {
-            LVColor color; /**< Color to recolor the image with */
-            LVOpacity intense; /**< LVOpacity of recoloring (0 means no recoloring) */
-            LVOpacity opa; /**< LVOpacity of whole image */
-        } image;
-
-        /**< Style of lines (not borders). */
-        struct
-        {
-            LVColor color;
-            LVCoord width;
-            LVOpacity opa;
-            uint8_t rounded : 1; /**< 1: rounded line endings*/
-        } line;
-    };
-
 public:
 
     static const LVStyle &scr;
@@ -131,6 +64,8 @@ public:
     static const LVStyle &btn_tgl_pr;
     static const LVStyle &btn_ina;
 
+    static LVStyle none;
+
     LVStyle()
     {}
 
@@ -144,7 +79,10 @@ public:
         *this = other;
     }
 
-    Private* operator ->(){ return (Private*)this; }
+    LVStyle(const lv_style_t* other)
+    {
+        *this = *other;
+    }
 
     /**********************
      * GLOBAL PROTOTYPES
@@ -204,34 +142,15 @@ public:
     }
 };
 
-//const LVStyle & LVStyle::scr          = *((LVStyle*)&lv_style_scr         ) ;
-//const LVStyle & LVStyle::transp       = *((LVStyle*)&lv_style_transp      ) ;
-//const LVStyle & LVStyle::transp_fit   = *((LVStyle*)&lv_style_transp_fit  ) ;
-//const LVStyle & LVStyle::transp_tight = *((LVStyle*)&lv_style_transp_tight) ;
-//const LVStyle & LVStyle::plain        = *((LVStyle*)&lv_style_plain       ) ;
-//const LVStyle & LVStyle::plain_color  = *((LVStyle*)&lv_style_plain_color ) ;
-//const LVStyle & LVStyle::pretty       = *((LVStyle*)&lv_style_pretty      ) ;
-//const LVStyle & LVStyle::pretty_color = *((LVStyle*)&lv_style_pretty_color) ;
-//const LVStyle & LVStyle::btn_rel      = *((LVStyle*)&lv_style_btn_rel     ) ;
-//const LVStyle & LVStyle::btn_pr       = *((LVStyle*)&lv_style_btn_pr      ) ;
-//const LVStyle & LVStyle::btn_tgl_rel  = *((LVStyle*)&lv_style_btn_tgl_rel ) ;
-//const LVStyle & LVStyle::btn_tgl_pr   = *((LVStyle*)&lv_style_btn_tgl_pr  ) ;
-//const LVStyle & LVStyle::btn_ina      = *((LVStyle*)&lv_style_btn_ina     ) ;
-
 #if LV_USE_ANIMATION
 
-
-
-
+//TODO:完善类的实现
 class LVStyleAnimation
         : public LVAnimation
-        , private LVMemoryHeader // fake Memory Header for lv_style_anim_dsc_t
-        , public lv_style_anim_dsc_t
+        //, public lv_style_anim_dsc_t
 {
     LV_MEMORY
 
-protected:
-    //LVAnimation m_anim;
 public:
 
     /**
@@ -244,11 +163,15 @@ public:
      * @param a pointer to an `lv_anim_t` variable to initialize
      */
     LVStyleAnimation()
-        :LVMemoryHeader(0,false)// mark mem ont used
+        :LVAnimation()
     {
-        LVMemory::placementAlloc((lv_style_anim_dsc_t*)this);
         lv_style_anim_init(this);
-        LVMemory::resetPlacementAlloc();
+        lvTrace("LVStyleAnimation Created. %p",this);
+    }
+
+    ~LVStyleAnimation()
+    {
+        lvTrace("LVStyleAnimation Destroyed. %p",this);
     }
 
     /**
@@ -284,7 +207,7 @@ public:
         if(ready_cb.isStdFunc())
         {
             m_ready_cb = ready_cb;
-            lv_style_anim_set_ready_cb(this,(lv_anim_ready_cb_t)lvAnimationReadyCallBackAgent);
+            lv_style_anim_set_ready_cb(this,(lv_anim_ready_cb_t)readyCallBackAgent);
         }
         else
         {
@@ -328,36 +251,6 @@ public:
     void clearRepeat()
     {
         lv_style_anim_clear_repeat(this);
-    }
-
-    /**
-     * Set a user specific data for the animation
-     * @param a pointer to an initialized `lv_anim_t` variable
-     * @param user_data the user data
-     */
-    void setUserData(lv_anim_user_data_t user_data)
-    {
-        lv_style_anim_set_user_data(this, user_data);
-    }
-
-    /**
-     * Get the user data
-     * @param a pointer to an initialized `lv_anim_t` variable
-     * @return the user data
-     */
-    lv_anim_user_data_t getUserData()
-    {
-        return lv_style_anim_get_user_data(this);
-    }
-
-    /**
-     * Get pointer to the user data
-     * @param a pointer to an initialized `lv_anim_t` variable
-     * @return pointer to the user data
-     */
-    lv_anim_user_data_t * getUserDataPtr()
-    {
-        return lv_style_anim_get_user_data_ptr(this);
     }
 
     /**

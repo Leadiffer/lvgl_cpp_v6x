@@ -46,7 +46,6 @@ enum Direction : lv_preload_dir_t
 /*Data of pre loader*/
 class LVPreloader
         : public LVObject
-        , public LVFakeMemHeader<lv_preload_ext_t>
         , public lv_preload_ext_t
 {
     LV_OBJECT(LVPreloader,lv_preload_create,lv_preload_ext_t)
@@ -55,7 +54,7 @@ public:
     /*Styles*/
     enum Styles : lv_preload_style_t
     {
-        LV_PRELOAD_STYLE_MAIN,
+        STYLE_MAIN,
     };
 
     /**********************
@@ -105,7 +104,7 @@ public:
      * @param type which style should be set
      * @param style pointer to a style
      *  */
-    void setStyle(Styles type, const LVStyle * style)
+    void setStyle(const LVStyle * style,Styles type = STYLE_MAIN)
     {
         lv_preload_set_style(this,type,style);
     }
