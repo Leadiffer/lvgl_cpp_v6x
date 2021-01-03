@@ -36,8 +36,7 @@ void LVScreenTask::onScreenShow()
 {
     if(m_runWithScreen)
     {
-        this->start();
-        //this->ready();
+        start();
     }
 }
 

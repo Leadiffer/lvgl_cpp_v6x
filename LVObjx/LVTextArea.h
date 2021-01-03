@@ -43,12 +43,12 @@ public:
     /** Style of text area's cursor. */
     enum Cursors : lv_cursor_type_t
     {
-        LV_CURSOR_NONE, /**< No cursor */
-        LV_CURSOR_LINE, /**< Vertical line */
-        LV_CURSOR_BLOCK, /**< Rectangle */
-        LV_CURSOR_OUTLINE, /**< Outline around character */
-        LV_CURSOR_UNDERLINE, /**< Horizontal line under character */
-        LV_CURSOR_HIDDEN = 0x08, /**< this flag can be ORed to any of the other values to temporarily hide the cursor */
+        CURSOR_NONE = LV_CURSOR_NONE, /**< No cursor */
+        CURSOR_LINE = LV_CURSOR_LINE, /**< Vertical line */
+        CURSOR_BLOCK = LV_CURSOR_BLOCK, /**< Rectangle */
+        CURSOR_OUTLINE = LV_CURSOR_OUTLINE, /**< Outline around character */
+        CURSOR_UNDERLINE = LV_CURSOR_UNDERLINE, /**< Horizontal line under character */
+        CURSOR_HIDDEN = LV_CURSOR_HIDDEN /**< this flag can be ORed to any of the other values to temporarily hide the cursor */
     };
 
     /**********************
@@ -92,7 +92,7 @@ public:
      * Delete a the left character from the current cursor position
      * @param ta pointer to a text area object
      */
-    void delChar()
+    void deleteChar()
     {
         lv_ta_del_char(this);
     }
@@ -101,7 +101,7 @@ public:
      * Delete the right character from the current cursor position
      * @param ta pointer to a text area object
      */
-    void delCharForward()
+    void deleteCharForward()
     {
         lv_ta_del_char_forward(this);
     }

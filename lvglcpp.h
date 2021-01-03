@@ -1,4 +1,7 @@
 
+#ifndef __LVGL_CPP_H__
+#define __LVGL_CPP_H__
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -24,6 +27,20 @@
 //    uintptr_t pointer:(sizeof(uintptr_t)-1); //!< 数据地址
 //    uintptr_t deleted:1; //!< 数据是否有效
 //} user_data_ptr;
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+bool lv_cpp_obj_init ();
+bool lv_cpp_group_init();
+bool lv_cpp_task_init();
+bool lv_cpp_anim_init();
+
+#ifdef __cplusplus
+}
+#endif
 
 /////////LVCore///////////////
 #include "LVCore/LVCallBack.h"
@@ -126,3 +143,4 @@
 #include "LVObjx/LVTileView.h"
 #include "LVObjx/LVWindow.h"
 
+#endif //__LVGL_CPP_H__

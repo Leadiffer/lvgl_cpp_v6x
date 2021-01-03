@@ -698,13 +698,13 @@ void LVString::remove(unsigned int index){
 }
 
 void LVString::remove(unsigned int index, unsigned int count){
-	if (index >= len) { return; }
-	if (count <= 0) { return; }
-	if (count > len - index) { count = len - index; }
-	char *writeTo = buffer + index;
-	len = len - count;
-	strncpy(writeTo, buffer + index + count,len - index);
-	buffer[len] = 0;
+    if (index >= len) { return; }
+    if (count <= 0) { return; }
+    if (count > len - index) { count = len - index; }
+    char *writeTo = buffer + index;
+    len = len - count;
+    strncpy(writeTo, buffer + index + count,len - index);
+    buffer[len] = 0;
 }
 
 void LVString::toLowerCase(void)

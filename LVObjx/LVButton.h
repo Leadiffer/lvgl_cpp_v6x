@@ -98,7 +98,8 @@ public:
      */
     void setToggleEnable(bool tgl)
     {
-        lv_btn_set_toggle(this,tgl);
+        if(getToggleEnable() != tgl)
+            lv_btn_set_toggle(this,tgl);
     }
 
     /**
@@ -108,7 +109,8 @@ public:
      */
     void setState(States state)
     {
-        lv_btn_set_state(this,state);
+    	if(getState() != state)
+    		lv_btn_set_state(this,state);
     }
 
     /**
@@ -227,7 +229,7 @@ public:
      * @param btn pointer to a button object
      * @return ture: toggle enabled, false: disabled
      */
-    bool getToggle()
+    bool getToggleEnable()
     {
         return lv_btn_get_toggle(this);
     }
@@ -321,6 +323,35 @@ public:
     const LVStyle * getStyle(Styles type)
     {
         return (const LVStyle *)lv_btn_get_style(this,type);
+    }
+
+    /**
+     * @brief Set Enable
+     * @param en
+     */
+    void setEnable(bool en)
+    {
+        setState(en?STATE_REL:STATE_INA);
+        setClickEnable(en);
+    }
+
+    /**
+     * @brief Set Disable
+     * @param dis
+     */
+    void setDisable(bool dis)
+    {
+        setState(dis?STATE_INA:STATE_REL);
+    }
+
+    bool getToggled()
+    {
+        return getState() == STATE_TGL_REL;
+    }
+
+    void setToggled(bool value)
+    {
+        setState(value?STATE_TGL_REL:STATE_REL);
     }
 };
 

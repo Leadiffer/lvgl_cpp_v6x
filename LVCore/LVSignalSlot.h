@@ -4,6 +4,7 @@
 #include <functional>
 #include <LVMisc/LVLinkList.h>
 #include <LVMisc/LVMemory.h>
+#include <LVCore/LVCallBack.h>
 
 class LVSignal;
 class LVSlot;
@@ -41,7 +42,7 @@ using ConnectionNode = LVLLNode<LVConnection*>;
  * 可以是成员函数
  * 可以是拉姆达表达式
  */
-using SlotFunc = std::function<void(LVSignal*)>;
+using SlotFunc = LVCallBack<void(LVSignal*),void>;
 
 /**
  * @brief 代表一个信号与槽的连接
@@ -213,7 +214,7 @@ protected:
     LVSignalList m_signalList; //!<关联的信号列表
     SlotFunc m_slotFunc; //!< 具体执行的槽函数
 public:
-    LVSlot(SlotFunc slotFunc = SlotFunc())
+    LVSlot(const SlotFunc & slotFunc = SlotFunc(nullptr))
         :m_signalList(sizeof (LVConnection*))
     {
         setSlotFunc(slotFunc);
@@ -224,7 +225,7 @@ public:
         disConnectAll();
     }
 
-    void setSlotFunc(SlotFunc slotFunc)
+    void setSlotFunc(const SlotFunc & slotFunc)
     {
         m_slotFunc = slotFunc;
     }
@@ -243,7 +244,7 @@ public:
 
     void operator()(LVSignal * signal)
     {
-    	if(m_slotFunc != nullptr)
+        if(m_slotFunc)
     		m_slotFunc(signal);
     }
 

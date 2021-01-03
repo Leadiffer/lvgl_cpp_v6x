@@ -12,6 +12,14 @@
 #include "LVScreenTask.h"
 #include "i18n.h"
 
+
+extern const char * btnMap_Close_S   [2];
+extern const char * btnMap_Ok_S      [2];
+extern const char * btnMap_No_Yes_S  [3];
+extern const char * btnMap_Ok_T      [2];
+extern const char * btnMap_No_Yes_T  [3];
+extern const char * btnMap_No_Yes_ST [3];
+
 /**
  * @brief 定义一个屏幕界面的基类
  * 屏幕管理
@@ -42,7 +50,7 @@ protected:
     LVColor m_screenColor; //!< 屏幕颜色
 
     ////////// 形成屏幕的显示链 ////////////////
-    LVPointer<LVScreen> m_preScreen ; //!< 前一个屏幕
+    LVPointer<LVScreen> m_prevScreen ; //!< 前一个屏幕
     LVPointer<LVScreen> m_nextScreen ; //!< 后一个屏幕
 
     static LVPointer<LVScreen> s_lastScreen; //!< 之前显示的屏幕
@@ -65,13 +73,13 @@ protected:
      * @brief 气泡消息
      * @return
      */
-    static LVLabel *bubble();
+    static LVLabel *bubble(bool create = true);
 
     /**
      * @brief 消息提示框
      * @return
      */
-    static LVMessageBox * messageBox();
+    static LVMessageBox * messageBox(bool create = true);
 
 public:
 
@@ -87,13 +95,20 @@ public:
 
     LVScreen(const char* name = "" ,LVObject * parent = nullptr);
 
-    ~LVScreen();
+    ~LVScreen() override;
 
     /**
      * @brief 显示屏幕
      * @return true 显示成功 ; false 显示失败
      */
     bool show();
+
+    /**
+     * @brief 显示屏幕,并记录前一个屏幕,以便屏幕返回
+     * @param prev
+     * @return
+     */
+    bool show(LVScreen * prev);
 
     /**
      * @brief 显示之前运行的函数
@@ -143,9 +158,9 @@ public:
     /**
      * @brief 显示屏幕链的前一个屏幕
      */
-    LVScreen * preScreen();
-    bool hasPreScreen();
-    void setPreScreen(LVScreen * screen);
+    LVScreen * prevScreen();
+    bool hasPrevScreen();
+    void setPrevScreen(LVScreen * screen);
 
     /**
      * @brief 显示屏幕链的后一个屏幕
@@ -191,7 +206,7 @@ public:
     void setScreenColor(LVColor color);
 
     bool isDeleteAfterHide();
-    void setDeleteAfterHide(bool value);
+    void setDeleteAfterHide(bool value = true);
 
     bool isInited(){ return m_inited; }
 
@@ -239,6 +254,8 @@ public:
      */
     static int32_t getUsedMemorySize();
 
+    static void logUsedMemorySize(const char *tag = "");
+
 
    ////////////////// 通用图形组件 ///////////////////////////////
 
@@ -253,15 +270,18 @@ public:
 
     /**
      * @brief 显示消息框
+     * 一般是提示些不重要的内容
      * @param mesg 消息文本
      * @param buts 按钮文本
      * @param action 回调函数
      * @param period 显示的周期  -1表示不自动关闭
      */
     static void showMessageBox(const char * mesg , const char ** buts ,
-                               const LVEventCallBack &callback , int32_t period = -1);
+                               const LVEventCallBack &callback , int32_t period = -1,bool masked = true);
 
-    static void messageBoxHide(){ messageBox()->setHidden(true); }
+    static void hideMessageBox();
+
+    static void deleteMessageBox();
 
     /**
      * @brief 安装透明遮罩

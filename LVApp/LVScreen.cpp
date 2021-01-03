@@ -9,6 +9,14 @@
 LVPointer<LVScreen> LVScreen::s_lastScreen;
 LVPointer<LVScreen> LVScreen::s_currScreen;
 
+//定义几组常用的按钮组
+const char * btnMap_Close_S   [2] = {LV_SYMBOL_CLOSE, ""};
+const char * btnMap_Ok_S      [2] = {LV_SYMBOL_OK, ""};
+const char * btnMap_No_Yes_S  [3] = {LV_SYMBOL_CLOSE , LV_SYMBOL_OK, ""};
+const char * btnMap_Ok_T      [2] = {"Ok", ""};
+const char * btnMap_No_Yes_T  [3] = {"No", "Yes", ""};
+const char * btnMap_No_Yes_ST [3] = {LV_SYMBOL_CLOSE " No", LV_SYMBOL_OK " Yes", ""};
+
 void memory_monitor(void * param);
 
 bool LVScreen::isClearAfterHide() const
@@ -44,7 +52,7 @@ void LVScreen::cleanScreen()
     //整理内存碎片
     //lv_mem_defrag();
 
-    LV_LOG_INFO("Screen::cleanScreen()");
+    lvInfo("Screen::cleanScreen()");
 
     //memory_monitor(nullptr);
 }
@@ -56,6 +64,14 @@ int32_t LVScreen::getUsedMemorySize()
     return mon.total_size - mon.free_size;
 }
 
+void LVScreen::logUsedMemorySize(const char * tag)
+{
+    int32_t UsedMemory = getUsedMemorySize();
+    char str[100];
+    sprintf(str,"%s UsedMemory : %d Bytes!",tag, UsedMemory);
+    lvWarn(str);
+}
+
 
 const char *LVScreen::name() const
 {
@@ -64,24 +80,14 @@ const char *LVScreen::name() const
 
 void LVScreen::setName(const char *name)
 {
-    if(m_name)
-    {
-        LVMemory::free(m_name);
-        m_name = nullptr;
-    }
-    uint32_t len = name?strlen(name):0;
-    if(len)
-    {
-        m_name = (char*)LVMemory::allocate(len+1);
-        if(m_name)
-            strcpy(m_name,name);
-    }
+    m_name = (char*)LVMemory::reallocate(m_name,strlen(name)+1);
+    strcpy(m_name,name);
 }
 
 LVBar * LVScreen::memoryDebuger()
 {
     //用进度条指示内存状态
-    static LVPointer<LVBar> barMem ;
+    static LVPointer<LVBar> barMem(true) ;
     static LVScopedPointer<LVTask> memTask ;
     //进度条样式
     static LVScopedPointer<LVStyle> styleProcessBar;
@@ -114,7 +120,7 @@ LVBar * LVScreen::memoryDebuger()
 
     if(!barMem)
     {
-        barMem = new LVBar(LVDisplay::getDefault()->getLayerTop(),nullptr);
+        barMem.reset(new LVBar(LVDisplay::getDefault()->getLayerSys(),nullptr));
         barMem->setStyle(styleProcessBar,LVBar::STYLE_BG);
         barMem->setStyle(styleProcessIndic,LVBar::STYLE_INDIC);
         barMem->setWidth(LVDisplay::getDefault()->getHorizontalResolution());
@@ -167,27 +173,33 @@ LVBar * LVScreen::memoryDebuger()
     return barMem;
 }
 
-LVLabel *LVScreen::bubble()
+LVLabel *LVScreen::bubble(bool create)
 {
-    static LVPointer<LVLabel> bubble;
+    static LVPointer<LVLabel> bubble(true);
     static LVScopedPointer<LVStyle> styleBubble;
 
-    if(!styleBubble)
+    if(!styleBubble && create)
     {
         //NOTE:主题刷新时无法更新样式
         styleBubble.reset(new LVStyle());
         *styleBubble = lv_style_plain;
+        //TODO:气泡的颜色应该跟着主题切换
         styleBubble->body.main_color = LV_COLOR_MAKE(0x17,0x28,0x45);
         styleBubble->body.grad_color = LV_COLOR_MAKE(0x17,0x28,0x45);
         styleBubble->text.color = LV_COLOR_WHITE;
+        styleBubble->body.opa = 170; //增加透明效果
+        styleBubble->body.padding.left = 8;
+        styleBubble->body.padding.right = 8;
+        styleBubble->body.padding.top = 6;
+        styleBubble->body.padding.bottom = 4;
     }
 
 
-    if(!bubble)
+    if(!bubble && create)
     {
         //气泡提示
-        bubble = new LVLabel(LVDisplay::getDefault()->getLayerTop(),nullptr);
-        bubble->align(ALIGN_IN_TOP_MID,0,8);
+        bubble.reset(new LVLabel(LVDisplay::getDefault()->getLayerTop(),nullptr));
+        bubble->align(ALIGN_IN_TOP_MID);
         bubble->setAutoRealign(true);
         bubble->setBodyDraw(true);
         bubble->setHidden(true); //隐藏,需要时再显示
@@ -205,16 +217,15 @@ void LVScreen::showBubble(const char *mesg, int32_t period)
     if(!bubbleTask)
     {
         bubbleTask.reset(new LVTask(
-        [=](LVTask*){
+        [&](LVTask*){
             bubble()->setHidden(true);
             bubbleTask->stop();
         },period));
     }
 
     auto * bubbleLab = bubble();
-    bubbleLab->setAlign(LVLabel::ALIGN_CENTER);
     bubbleLab->setText(mesg);
-    bubbleLab->realign();
+    bubbleLab->moveForeground(); //顶端显示
     bubbleLab->setHidden(false);
 
     //一会自动隐藏
@@ -222,9 +233,28 @@ void LVScreen::showBubble(const char *mesg, int32_t period)
         bubbleTask->start(period);
 }
 
-void LVScreen::showMessageBox(const char *mesg, const char **buts,const LVEventCallBack& callback, int32_t period)
+void LVScreen::showMessageBox(const char *mesg, const char **buts, const LVEventCallBack& callback, int32_t period, bool masked)
 {
+    static LVPointer<LVObject> mask(true);
     LVMessageBox * mbox = messageBox();
+
+    //配置消息框遮罩
+    if(masked && !mask)
+    {
+        mask.reset(setupMask(mbox->getParent()));
+
+        mbox->setSignalCallBack([&](LVObject * obj, SignalType sign, void * param)->LVResult
+        {
+            //消息框关闭时,自动清理遮罩
+            if(obj && mask && sign == SIGNAL_CLEANUP)
+                delete mask.get();
+            //消息框隐藏时,遮罩也隐藏
+            else if(obj && mask && sign == SIGNAL_HIDDEN_CHG)
+                mask->setHidden(obj->hidden);
+            return (LVResult)(obj->ancestorSignalCB()(obj,sign,param));
+        });
+    }
+
     mbox->setText(mesg);
     mbox->addButtons(buts);
     mbox->setEventCallBack(callback);
@@ -235,14 +265,33 @@ void LVScreen::showMessageBox(const char *mesg, const char **buts,const LVEventC
 
     mbox->align(ALIGN_CENTER);
     mbox->setHidden(false);
+    if(mask)
+    {
+        mask->setHidden(false);
+        mbox->moveForeground();
+    }
 }
 
-LVMessageBox *LVScreen::messageBox()
+void LVScreen::hideMessageBox()
 {
-    static LVPointer<LVMessageBox> mbox;
-    if(!mbox)
+    if(messageBox(false))
+        messageBox(false)->setHidden(true);
+}
+
+void LVScreen::deleteMessageBox()
+{
+    if(messageBox(false))
+        delete messageBox(false);
+}
+
+LVMessageBox *LVScreen::messageBox(bool create)
+{
+    static LVPointer<LVMessageBox> mbox(true);
+    if(!mbox && create)
     {
-        mbox = new LVMessageBox(LVDisplay::getDefault()->getLayerTop());
+        mbox.reset(new LVMessageBox(LVDisplay::getDefault()->getLayerTop()));
+        //增加消息框的宽度
+        mbox->setWidth(LVDisplay::getDefault()->getHorizontalResolution() - 40);
         mbox->align(ALIGN_CENTER);
         mbox->setHidden(true);
     }
@@ -258,7 +307,7 @@ LVObject * LVScreen::setupMask(LVObject *parent)
         //NOTE:切换主题时可能无法更新样式
         maskStyle.reset(new LVStyle());
         *maskStyle = lv_style_plain;
-        maskStyle->body.opa = 170;
+        maskStyle->body.opa = 200;
         maskStyle->body.main_color = LV_COLOR_GRAY;
         maskStyle->body.grad_color = LV_COLOR_GRAY;
     }
@@ -292,6 +341,9 @@ LVScreen::~LVScreen()
     if(CurrScreen() == this)
         setCurrScreen(nullptr);
     lvInfo("Screen::~Screen() [%s]",m_name);
+
+    //清理名字文本
+    LVMemory::free(m_name);
 }
 
 
@@ -341,7 +393,7 @@ void LVScreen::afterCleanScreen()
 
 bool LVScreen::setupScreen()
 {
-    LV_LOG_INFO("Screen::initScreen() empty function");
+    lvInfo("Screen::initScreen() empty function");
     return false;
 }
 
@@ -372,6 +424,12 @@ bool LVScreen::show()
     return ret;
 }
 
+bool LVScreen::show(LVScreen *prev)
+{
+    setPrevScreen(prev);
+    return show();
+}
+
 bool LVScreen::beforeShow()
 {
 
@@ -392,11 +450,11 @@ bool LVScreen::beforeShow()
             char str[40];
             //警告内存有泄露
             sprintf(str,"Memory used : %d Bytes!", m_memoryUsed);
-            LV_LOG_WARN(str);
+            lvWarn(str);
         }
 
         if(!m_inited)
-            LV_LOG_INFO("Screen::beforeShow() setupScreen false");
+            lvInfo("Screen::beforeShow() setupScreen false");
     }
 
     return true;
@@ -425,7 +483,7 @@ bool LVScreen::hide()
                 char str[40];
                 //警告内存有泄露
                 sprintf(str,"Memory leak deteted : %d Bytes!", m_memoryUsed - memoryRecovery);
-                LV_LOG_WARN(str);
+                lvWarn(str);
             }
         }
 
@@ -464,19 +522,19 @@ bool LVScreen::hasLastScreen()
     return s_lastScreen != nullptr && s_lastScreen.get() != s_currScreen.get();
 }
 
-LVScreen *LVScreen::preScreen()
+LVScreen *LVScreen::prevScreen()
 {
-    return m_preScreen;
+    return m_prevScreen;
 }
 
-bool LVScreen::hasPreScreen()
+bool LVScreen::hasPrevScreen()
 {
-    return m_preScreen != nullptr;
+    return m_prevScreen != nullptr;
 }
 
-void LVScreen::setPreScreen(LVScreen *screen)
+void LVScreen::setPrevScreen(LVScreen *screen)
 {
-    m_preScreen = screen;
+    m_prevScreen.reset(screen);
 }
 
 LVScreen *LVScreen::nextScreen()
@@ -491,7 +549,7 @@ bool LVScreen::hasNextScreen()
 
 void LVScreen::setNextScreen(LVScreen *screen)
 {
-    m_nextScreen = screen;
+    m_nextScreen.reset(screen);
 }
 
 bool LVScreen::isVisible()
@@ -553,12 +611,12 @@ uint16_t LVScreen::dpi()
 
 void LVScreen::setLastScreen(LVScreen *screen)
 {
-    s_lastScreen = screen;
+    s_lastScreen.reset(screen);
 }
 
 void LVScreen::setCurrScreen(LVScreen *screen)
 {
-    s_currScreen = screen;
+    s_currScreen.reset(screen);
 }
 
 void LVScreen::startScreenTask()

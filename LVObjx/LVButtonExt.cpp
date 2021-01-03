@@ -1,7 +1,9 @@
-#include "lvbuttonext.h"
+#include "LVButtonExt.h"
 
 LVButtonExt::LVButtonExt(LVObject *par, const LVButtonExt *copy)
     :LVButton(par,copy)
+    ,m_icon(true)
+    ,m_text(true)
 {
     //复制属性
     if(copy)
@@ -12,7 +14,7 @@ LVButtonExt::LVButtonExt(LVObject *par, const LVButtonExt *copy)
     }
     else
     {
-        m_pattern = TextUnderIcon;
+        m_pattern = COL_TextIcon;
     }
 }
 
@@ -42,7 +44,8 @@ const void *LVButtonExt::getIcon()
 
 void LVButtonExt::setIcon(const void *icon)
 {
-    if(!m_icon) m_icon = new LVImage(this);
+    if(!m_icon)
+        m_icon.reset(new LVImage(this));
     m_icon->setSrc(icon);
     updatePattern();
 }
@@ -54,7 +57,11 @@ char *LVButtonExt::getText()
 
 void LVButtonExt::setText(const char *text)
 {
-    if(!m_text) m_text = new LVLabel(this);
+    if(!m_text)
+    {
+        m_text.reset(new LVLabel(this));
+        m_text->setAlign(LVLabel::ALIGN_CENTER);
+    }
     m_text->setText(text);
     updatePattern();
 }
@@ -85,19 +92,25 @@ void LVButtonExt::updatePattern()
         if(m_icon) m_icon->setHidden(true);
         setLayout(LVLayouts::LAYOUT_CENTER);
         break;
-    case TextUnderIcon  :
+    case COL_TextIcon  :
+        if(m_icon) m_icon->setHidden(false);
+        if(m_text) m_text->setHidden(false);
+        if(m_icon) m_icon->moveForeground();
+        setLayout(LVLayouts::LAYOUT_COL_M);
+        break;
+    case COL_IconText  :
         if(m_icon) m_icon->setHidden(false);
         if(m_text) m_text->setHidden(false);
         if(m_text) m_text->moveForeground();
-        setLayout(LVLayouts::LAYOUT_CENTER);
+        setLayout(LVLayouts::LAYOUT_COL_M);
         break;
-    case IconText :
+    case ROW_IconText :
         if(m_icon) m_icon->setHidden(false);
         if(m_text) m_text->setHidden(false);
         if(m_text) m_text->moveForeground();
         setLayout(LVLayouts::LAYOUT_ROW_M);
         break;
-    case TextIcon :
+    case ROW_TextIcon :
         if(m_icon) m_icon->setHidden(false);
         if(m_text) m_text->setHidden(false);
         if(m_icon) m_icon->moveForeground();

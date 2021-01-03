@@ -5,15 +5,14 @@
 extern "C"
 {
 
-lv_obj_t * lv_obj_create_custom(void*(*func)(lv_ll_t *), lv_ll_t * ll_p);
-void lv_obj_del_custom(lv_obj_t * obj);
-void * lv_obj_allocate_ext_attr_custom(lv_obj_t * obj,void * (*func)(void *, size_t), void *data_p, size_t new_size);
+//lv_obj_t * lv_obj_create_custom(void*(*func)(lv_ll_t *), lv_ll_t * ll_p);
+//void lv_obj_del_custom(lv_obj_t * obj);
+//void * lv_obj_allocate_ext_attr_custom(lv_obj_t * obj,void * (*func)(void *, size_t), void *data_p, size_t new_size);
 
 extern lv_obj_t *& new_obj_addr();
 extern void *& new_obj_attr_addr();
 extern void *& new_obj_attr_obj_addr();
 
-}
 
 /**
  * @brief 自定义对象创建函数
@@ -73,6 +72,21 @@ void *lv_obj_allocate_ext_attr_custom(lv_obj_t * obj,void * (*func)(void *, size
     }
 }
 
+extern lv_obj_t * (*lv_obj_create_custom_ptr)(void*(*func)(lv_ll_t *),lv_ll_t * ll_p);
+extern void (*lv_obj_del_custom_ptr)(lv_obj_t * obj);
+extern void * (*lv_obj_allocate_ext_attr_custom_ptr) (lv_obj_t * obj, void * (*func)(void *, size_t),void * data_p, size_t new_size);
+
+bool lv_cpp_obj_init ()
+{
+	lv_obj_create_custom_ptr = lv_obj_create_custom;
+	lv_obj_del_custom_ptr = lv_obj_del_custom;
+	lv_obj_allocate_ext_attr_custom_ptr = lv_obj_allocate_ext_attr_custom;
+	return true;
+}
+static bool lv_cpp_obj = lv_cpp_obj_init();
+
+}
+
 
 bool LVObject::isVaild()
 {
@@ -101,10 +115,10 @@ void LVObject::addPointer(LVPointerBase *pointer)
         //默认开辟
         //BUG:实际分配的内存块可能大于指定数
         m_pointers = (LVPointerBase **)LVMemory::allocate(sizeof(LVPointerBase*));
-        memset(m_pointers,0,LVMemory::getMemoryEntry(m_pointers)->getSize());
+        memset(m_pointers,0,LVMemory::getSize(m_pointers));
     }
     //寻找可用的空间
-    uint32_t size = LVMemory::getMemoryEntry(m_pointers)->getSize();
+    uint32_t size = LVMemory::getSize(m_pointers);
     uint32_t ptrSize = size/sizeof(LVPointerBase*);
     //lvInfo("objrct(0x%p) add Pointer(0x%p) size:%d",this,m_pointers,size);
     for (uint32_t i = 0; i < ptrSize; ++i)
@@ -123,22 +137,25 @@ void LVObject::addPointer(LVPointerBase *pointer)
     //开辟新空间
     m_pointers = (LVPointerBase **)LVMemory::reallocate(m_pointers,size+sizeof(LVPointerBase*));
     //BUG:实际分配的内存块可能大于指定数
-    memset(m_pointers+(ptrSize),0,LVMemory::getMemoryEntry(m_pointers)->getSize()-size);
+    memset(m_pointers+(ptrSize),0,LVMemory::getSize(m_pointers)-size);
     m_pointers[ptrSize] = pointer;
 }
 
 bool LVObject::removePointer(LVPointerBase *pointer)
 {
     if(m_pointers == nullptr)
+    {
+    	lvError("LVObject::removePointer error %p %p",this,pointer);
         return false; //NOTE:一种错误的情况,不该发生
-    uint32_t size = LVMemory::getMemoryEntry(m_pointers)->getSize();
+    }
+    uint32_t size = LVMemory::getSize(m_pointers);
     //lvInfo("objrct(0x%p) remove Pointer(0x%p) size:%d",this,m_pointers,size);
     for (uint32_t i = 0, n = size/sizeof(LVPointerBase*) ; i < n; ++i)
     {
         if(m_pointers[i] == pointer)
         {
             //抹除智能指针关联
-            pointer->m_obj = nullptr;
+            pointer->m_obj = 0;
             m_pointers[i] = nullptr;
             return true;
         }
@@ -150,13 +167,13 @@ void LVObject::cleanPointers()
 {
     if(m_pointers == nullptr)
         return;
-    uint32_t size = LVMemory::getMemoryEntry(m_pointers)->getSize();
+    uint32_t size = LVMemory::getSize(m_pointers);
     //lvInfo("objrct(0x%p) clean Pointer(0x%p) size:%d",this,m_pointers,size);
     for (uint32_t i = 0, n = size/sizeof(LVPointerBase*) ; i < n; ++i)
     {
         if(m_pointers[i] != nullptr)
         {
-            m_pointers[i]->m_obj = nullptr;
+            m_pointers[i]->m_obj = 0;
             m_pointers[i] = nullptr;
         }
     }
@@ -261,7 +278,8 @@ void LVObject::evenCallBackAgency(_lv_obj_t *obj, lv_event_t event)
     {
         lvError("evenCallBackAgency : LVObject->m_eventCallback is not set yet ! call ancestor Event callback.");
         lvObj->resetEventCB();
-        (lvObj->ancestorEventCB())(obj,event);
+        if(lvObj->ancestorEventCB())
+            lvObj->ancestorEventCB()(obj,event);
     }
 }
 

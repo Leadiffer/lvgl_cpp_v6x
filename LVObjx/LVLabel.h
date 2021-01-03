@@ -51,6 +51,7 @@ public:
         ALIGN_LEFT   = LV_LABEL_ALIGN_LEFT, /**< Align text to left */
         ALIGN_CENTER = LV_LABEL_ALIGN_CENTER, /**< Align text to center */
         ALIGN_RIGHT  = LV_LABEL_ALIGN_RIGHT, /**< Align text to right */
+        ALIGN_AUTO   = LV_LABEL_ALIGN_AUTO, /**< Use LEFT or RIGHT depending on the direction of the text (LTR/RTL)*/
     };
 
     /** Label styles*/
@@ -87,7 +88,8 @@ public:
      */
     void setText(const char * text)
     {
-        lv_label_set_text(this,text);
+    	if(strcmp(text,getText()))
+    		lv_label_set_text(this,text);
     }
 
     /**
@@ -132,7 +134,8 @@ public:
      */
     void setAlign(AlignPolicy align)
     {
-        lv_label_set_align(this,align);
+    	if(getAlign() != align)
+    		lv_label_set_align(this,align);
     }
 
     /**
@@ -140,7 +143,7 @@ public:
      * @param label pointer to a label object
      * @param en true: enable recoloring, false: disable
      */
-    void setRecolor(bool en)
+    void setRecolor(bool en = true)
     {
         lv_label_set_recolor(this,en);
     }
@@ -150,7 +153,7 @@ public:
      * @param label pointer to a label object
      * @param en true: draw body; false: don't draw body
      */
-    void setBodyDraw(bool en)
+    void setBodyDraw(bool en = true)
     {
         lv_label_set_body_draw(this,en);
     }

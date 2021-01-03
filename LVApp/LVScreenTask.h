@@ -34,7 +34,7 @@ public:
 
     virtual ~LVScreenTask();
 
-    LVScreen * screen() { return m_screen; }
+    LVScreen * getScreen() { return m_screen; }
     void setScreen(LVScreen * screen);
 
     void setRunWithScreen(bool value = true) { m_runWithScreen = value; }

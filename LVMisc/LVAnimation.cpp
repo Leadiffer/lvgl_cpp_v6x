@@ -3,10 +3,10 @@
 
 extern "C"
 {
-    lv_anim_t * lv_anim_create_custom(lv_anim_t * anim, void * (*func)(lv_ll_t * ll_p), lv_ll_t * ll_p);
-    void lv_anim_del_custom(lv_anim_t * anim);
-    void *& new_anim_addr();
-}
+//    lv_anim_t * lv_anim_create_custom(lv_anim_t * anim, void * (*func)(lv_ll_t * ll_p), lv_ll_t * ll_p);
+//    void lv_anim_del_custom(lv_anim_t * anim);
+
+    extern void *& new_anim_addr();
 
 lv_anim_t * lv_anim_create_custom(lv_anim_t * anim, void * (*func)(lv_ll_t * ll_p), lv_ll_t * ll_p)
 {
@@ -38,6 +38,20 @@ void lv_anim_del_custom(lv_anim_t * anim)
     {
         lv_mem_free(anim);
     }
+}
+
+extern lv_anim_t * (*lv_anim_create_custom_ptr)(lv_anim_t * anim, void * (*func)(lv_ll_t * ll_p), lv_ll_t * ll_p);
+extern void(* lv_anim_del_custom_ptr)(lv_anim_t * anim);
+
+bool lv_cpp_anim_init()
+{
+	lv_anim_create_custom_ptr = lv_anim_create_custom;
+	lv_anim_del_custom_ptr = lv_anim_del_custom;
+	return true;
+}
+
+static bool lv_cpp_anim = lv_cpp_anim_init();
+
 }
 
 bool LVAnimation::isVaild()

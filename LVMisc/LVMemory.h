@@ -19,64 +19,65 @@
  *      DEFINES
  *********************/
 
+//BUG:造成内存管理混乱破裂
 
-class LVMemoryHeader //: public lv_mem_header_t
-{
-public:
+//class LVMemoryHeader //: public lv_mem_header_t
+//{
+//public:
 
-    /*The size of this class must be 4 bytes (uint32_t)*/
-    union
-    {
-        struct
-        {
-            uintptr_t used : 1;    // 1: if the entry is used
-            uintptr_t d_size : 31; // Size off the data (1 means 1 bytes)
-        } s;
-        uintptr_t header; // The header (used + d_size)
-    };
+//    /*The size of this class must be 4 bytes (uint32_t)*/
+//    union
+//    {
+//        struct
+//        {
+//            uintptr_t used : 1;    // 1: if the entry is used
+//            uintptr_t d_size : 31; // Size off the data (1 means 1 bytes)
+//        } s;
+//        uintptr_t header; // The header (used + d_size)
+//    };
 
-    LVMemoryHeader(uint32_t size = 0,bool use = true)
-    {
-        s.d_size = size;
-        s.used = use;
-    }
+//    LVMemoryHeader(uint32_t size = 0,bool use = true)
+//    {
+//        s.d_size = size;
+//        s.used = use;
+//    }
 
-    static void setMemHeader(void *data_p, uint32_t size = 0,bool use = true)
-    {
-        LVMemoryHeader * memHeader = (LVMemoryHeader*)((uint8_t*)data_p)-sizeof(LVMemoryHeader);
-        memHeader->s.d_size = size;
-        memHeader->s.used = use;
-    }
+//    static void setMemHeader(void *data_p, uint32_t size = 0,bool use = true)
+//    {
+//        LVMemoryHeader * memHeader = (LVMemoryHeader*)((uint8_t*)data_p)-sizeof(LVMemoryHeader);
+//        memHeader->s.d_size = size;
+//        memHeader->s.used = use;
+//    }
 
-    uint32_t getSize(){ return s.d_size; }
-    bool isUsed(){ return s.used == 1; }
-//protected:
-    void setSize(uint32_t size){ s.d_size = size; }
-    void setUsed(bool use){ s.used = use; }
-};
+//    uint32_t getSize(){ return s.d_size; }
+//    bool isUsed(){ return s.used == 1; }
+////protected:
+//    void setSize(uint32_t size){ s.d_size = size; }
+//    void setUsed(bool use){ s.used = use; }
+//};
 
-template<typename T = uint32_t>
-class LVFakeMemHeader
-{
-public:
-    LVMemoryHeader m_header;
-    LVFakeMemHeader(bool use = true)
-        :m_header(sizeof(T),use)
-    {}
-    LVFakeMemHeader(uint32_t size ,bool use = true)
-        :m_header(size,use)
-    {}
+//template<typename T = uint32_t>
+//class LVFakeMemHeader
+//{
+//public:
+//    LVMemoryHeader m_header;
+//    LVFakeMemHeader(bool use = true)
+//        :m_header(sizeof(T),use)
+//    {}
+//    LVFakeMemHeader(uint32_t size ,bool use = true)
+//        :m_header(size,use)
+//    {}
 
-    bool isUsed(){ return m_header.s.used == 1; }
-};
+//    bool isUsed(){ return m_header.s.used == 1; }
+//};
 
 
-class LVMemoryEntry : public LVMemoryHeader //: public lv_mem_ent_t
-{
-public:
-    //LVMemoryHeader header;
-    uint8_t first_data; /*First data byte in the allocated data (Just for easily create a pointer)*/
-};
+//class LVMemoryEntry : public LVMemoryHeader //: public lv_mem_ent_t
+//{
+//public:
+//    //LVMemoryHeader header;
+//    uint8_t first_data; /*First data byte in the allocated data (Just for easily create a pointer)*/
+//};
 
 
 //实现LVGL对内存的管理
@@ -114,6 +115,9 @@ static void * operator new(size_t /*size*/,void * addr) \
     return addr; \
 }
 
+/**
+ * @brief 将自定义类的内存分配交由LVGL管理
+ */
 #define LV_MEMORY \
     public: \
     LV_MEMORY_NEW \
@@ -232,27 +236,27 @@ public:
      *     ENHANCE
      *******************/
 
-    static LVMemoryEntry * getMemoryEntry(void * data_p)
-    {
-        return (LVMemoryEntry *)((uint8_t *)data_p - sizeof(LVMemoryHeader));
-    }
+//    static LVMemoryEntry * getMemoryEntry(void * data_p)
+//    {
+//        return (LVMemoryEntry *)((uint8_t *)data_p - sizeof(LVMemoryHeader));
+//    }
 
 
 
-    static void setMemHeader(void *data_p, uint32_t size = 0,bool use = true)
-    {
-        LVMemoryHeader::setMemHeader(data_p,size,use);
-    }
+//    static void setMemHeader(void *data_p, uint32_t size = 0,bool use = true)
+//    {
+//        LVMemoryHeader::setMemHeader(data_p,size,use);
+//    }
 
     /**
      * @brief 得到由lvgl开辟的对象大小
      * @param data_p
      * @return
      */
-    static uint32_t sizeof_(void *data_p)
-    {
-        return LVMemory::getMemoryEntry(data_p)->getSize();
-    }
+//    static uint32_t sizeof_(void *data_p)
+//    {
+//        return LVMemory::getMemoryEntry(data_p)->getSize();
+//    }
 
     /**
      * @brief 设置新建对象的地址

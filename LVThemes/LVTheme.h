@@ -36,6 +36,40 @@ protected:
     LVTheme() {}
 public:
 
+    /**
+     * @brief 主题的枚举
+     */
+    enum Themes : uint16_t
+    {
+#if LV_USE_THEME_DEFAULT
+        Default,
+#endif
+#if LV_USE_THEME_ALIEN
+        Alien,
+#endif
+#if LV_USE_THEME_MATERIAL
+        Material,
+#endif
+#if LV_USE_THEME_MONO
+        Mono,
+#endif
+#if LV_USE_THEME_NEMO
+        Nemo,
+#endif
+#if LV_USE_THEME_NIGHT
+        Night,
+#endif
+#if LV_USE_THEME_ZEN
+        Zen,
+#endif
+#if LV_USE_THEME_TEMPL
+        Templ,
+#endif
+        _END_THEME
+    };
+
+    static const char * ThemeNames[];
+
     /**********************
      *  GLOBAL PROTOTYPES
      **********************/
@@ -49,6 +83,8 @@ public:
     {
         lv_theme_set_current(this);
     }
+
+    static void setCurrent(Themes theme , uint16_t hue ,lv_font_t * font = nullptr);
 
     /**
      * Get the current system theme.

@@ -267,10 +267,15 @@ public:
         reset();
     }
 
+    /**
+     * @brief 开始任务,同时调整优先级
+     * @param prio
+     */
     void start(Priority prio)
     {
         setPriority(prio);
         lv_task_set_prio(this, m_priority);
+        reset();
     }
 
     /**

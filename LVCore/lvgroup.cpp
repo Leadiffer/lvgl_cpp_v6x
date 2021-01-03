@@ -2,11 +2,11 @@
 
 extern "C"
 {
-lv_group_t * lv_group_create_custom(void * (*func)(lv_ll_t * ll_p),lv_ll_t * ll_p);
-void lv_group_del_custom(lv_group_t * group);
+//lv_group_t * lv_group_create_custom(void * (*func)(lv_ll_t * ll_p),lv_ll_t * ll_p);
+//void lv_group_del_custom(lv_group_t * group);
 
 extern void *& new_group_addr();
-}
+
 
 lv_group_t * lv_group_create_custom(void * (*func)(lv_ll_t * ll_p),lv_ll_t * ll_p)
 {
@@ -39,6 +39,20 @@ void lv_group_del_custom(lv_group_t * group)
     {
         lv_mem_free(group);
     }
+}
+
+extern lv_group_t * (*lv_group_create_custom_ptr)(void * (*func)(lv_ll_t * ll_p),lv_ll_t * ll_p);
+extern void (* lv_group_del_custom_ptr)(lv_group_t * group);
+
+bool lv_cpp_group_init()
+{
+	lv_group_create_custom_ptr = lv_group_create_custom;
+	lv_group_del_custom_ptr = lv_group_del_custom;
+	return true;
+}
+
+static bool lv_cpp_group = lv_cpp_group_init();
+
 }
 
 bool LVGroup::isVaild()

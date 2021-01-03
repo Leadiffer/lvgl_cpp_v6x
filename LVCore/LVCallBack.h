@@ -255,7 +255,12 @@ public:
     ReturnType operator ()(Args&&... args)
     {
         if(isNull())
-            throw std::bad_function_call();
+        {
+        	//需要开启异常处理,不适合嵌入式
+            //throw std::bad_function_call();
+        	LV_LOG_ERROR("LVCallBack: bad_function_call");
+        	assert(false);
+        }
         switch (m_type)
         {
         case FUNC_PTR: return (*(reinterpret_cast<MethodSignature*>(m_pointer)))(std::forward<Args>(args)...); break;

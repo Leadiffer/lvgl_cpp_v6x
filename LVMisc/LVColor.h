@@ -232,7 +232,7 @@ public:
         this->full = c;
         return *this;
     }
-
+#if LV_COLOR_16_SWAP == 0
     LVColor& operator=(int32_t c)
     {
         this->ch.red   = (uint16_t)((c>>16 & 0xff) >> 3);
@@ -240,6 +240,7 @@ public:
         this->ch.blue  = (uint16_t)((c     & 0xff) >> 3);
         return *this;
     }
+#endif
 
     /**********************
      * GLOBAL PROTOTYPES
@@ -320,10 +321,12 @@ public:
         return lv_color_rgb_to_hsv(r,g,b);
     }
 
+#if LV_COLOR_16_SWAP == 0
     inline LVColorHSV toHsv()
     {
         return rgbToHsv(this->ch.red,this->ch.green,this->ch.blue);
     }
+#endif
 
 };
 

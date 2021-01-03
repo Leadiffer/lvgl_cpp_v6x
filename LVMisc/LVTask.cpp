@@ -2,11 +2,11 @@
 
 extern "C"
 {
-lv_task_t * lv_task_create_basic_custom(void * func,lv_ll_t * ll_p,void * n_pos);
-void lv_task_del_custom(lv_task_t * task);
+//lv_task_t * lv_task_create_basic_custom(void * func,lv_ll_t * ll_p,void * n_pos);
+//void lv_task_del_custom(lv_task_t * task);
 
 extern void *& new_task_addr();
-}
+
 
 lv_task_t * lv_task_create_basic_custom(void * func,lv_ll_t * ll_p,void * n_pos)
 {
@@ -52,6 +52,21 @@ void lv_task_del_custom(lv_task_t * task)
     {
         lv_mem_free(task);
     }
+}
+
+
+extern lv_task_t * (*lv_task_create_basic_custom_ptr)(void * func,lv_ll_t * ll_p,void * n_pos);
+extern void (*lv_task_del_custom_ptr)(lv_task_t * task);
+
+bool lv_cpp_task_init()
+{
+	lv_task_create_basic_custom_ptr = lv_task_create_basic_custom;
+	lv_task_del_custom_ptr = lv_task_del_custom;
+	return true;
+}
+
+static bool lv_cpp_task = lv_cpp_task_init();
+
 }
 
 bool LVTask::isVaild()

@@ -62,7 +62,8 @@ public:
      */
     void setValue(int16_t value, lv_anim_enable_t anim = LV_ANIM_OFF)
     {
-        lv_slider_set_value(this, value, anim);
+        if(getValue() != value)
+            lv_slider_set_value(this, value, anim);
     }
 
     /**

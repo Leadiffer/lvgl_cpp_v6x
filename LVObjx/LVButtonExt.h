@@ -24,9 +24,10 @@ public:
     {
         IconOnly,       //!< 只显示图标
         TextOnly,       //!< 只显示文字
-        TextUnderIcon,  //!< 文字在图标下方
-        IconText,       //!< 文字在图标右侧
-        TextIcon        //!< 图标在文字右侧
+        COL_IconText,  //!< 文字在图标下方
+        COL_TextIcon,  //!< 文字在图标下方
+        ROW_IconText,  //!< 文字在图标右侧
+        ROW_TextIcon   //!< 图标在文字右侧
     };
 
 protected:
@@ -39,7 +40,7 @@ public:
 
     LVButtonExt(LVObject * par = nullptr, const LVButtonExt * copy = nullptr);
 
-    LVButtonExt(const char * text, const void * icon = nullptr, Pattern composing = TextUnderIcon,
+    LVButtonExt(const char * text, const void * icon = nullptr, Pattern composing = COL_IconText,
                 LVObject * par = nullptr, const LVButtonExt *copy = nullptr);
 
     /**

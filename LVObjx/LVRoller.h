@@ -29,6 +29,7 @@ class LVRoller
         : public LVObject
         , lv_roller_ext_t
 {
+    LV_OBJECT(LVRoller,lv_roller_create,lv_roller_ext_t)
 public:
 
     enum Styles : lv_roller_style_t
@@ -66,7 +67,7 @@ public:
      * @param options a string with '\n' separated options. E.g. "One\nTwo\nThree"
      * @param mode `LV_ROLLER_MODE_NORMAL` or `LV_ROLLER_MODE_INFINITE`
      */
-    void setOptions(const char * options, lv_roller_mode_t mode)
+    void setOptions(const char * options, Modes mode)
     {
         lv_roller_set_options(this,options,mode);
     }

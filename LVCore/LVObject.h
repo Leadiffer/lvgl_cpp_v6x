@@ -99,7 +99,7 @@ public:
 
 // LV对象的先祖属性,这里特指几种回调函数
 #define LV_ANCESTOR \
-    protected: \
+    public: \
     virtual lv_design_cb_t & ancestorDesignCB()override \
     { static lv_design_cb_t l_designCB = nullptr; return l_designCB; } \
     virtual lv_signal_cb_t & ancestorSignalCB()override \
@@ -111,7 +111,7 @@ public:
     protected: \
     CLASS(){} \
     public: \
-    CLASS(LVObject* parent,const CLASS* copy = nullptr) \
+    explicit CLASS(LVObject* parent,const CLASS* copy = nullptr) \
     { \
         LVMemory::setNewObjectAddr(static_cast<lv_obj_t*>(this),static_cast<ATTR*>(this)); \
         FUNC(parent,copy); \
@@ -150,7 +150,7 @@ enum EventType : lv_event_t
 {
     EVENT_PRESSED             = LV_EVENT_PRESSED,               /*The object has been pressed*/
     EVENT_PRESSING            = LV_EVENT_PRESSING,              /*The object is being pressed (called continuously while pressing)*/
-    EVENT_PRESS_LOST          = LV_EVENT_PRESS_LOST,            /*Still pressing but slid from the objects*/
+    EVENT_PRESS_LOST          = LV_EVENT_PRESS_LOST,            /*Still pressing but slid from other objects*/
     EVENT_SHORT_CLICKED       = LV_EVENT_SHORT_CLICKED,         /*Released before long press time. Not called if dragged.*/
     EVENT_LONG_PRESSED        = LV_EVENT_LONG_PRESSED,          /*Pressing for `LV_INDEV_LONG_PRESS_TIME` time.  Not called if dragged.*/
     EVENT_LONG_PRESSED_REPEAT = LV_EVENT_LONG_PRESSED_REPEAT,   /*Called after `LV_INDEV_LONG_PRESS_TIME` in every
@@ -177,6 +177,7 @@ enum SignalType : lv_signal_t
     /*General signals*/              /*General signals*/
     SIGNAL_CLEANUP                 = LV_SIGNAL_CLEANUP,
     SIGNAL_CHILD_CHG               = LV_SIGNAL_CHILD_CHG,
+    SIGNAL_HIDDEN_CHG              = LV_SIGNAL_HIDDEN_CHG,
     SIGNAL_CORD_CHG                = LV_SIGNAL_CORD_CHG,
     SIGNAL_PARENT_SIZE_CHG         = LV_SIGNAL_PARENT_SIZE_CHG,
     SIGNAL_STYLE_CHG               = LV_SIGNAL_STYLE_CHG,
@@ -336,7 +337,7 @@ protected:
         //绑定对象
         lvInfo("LVObject(0x%p) created.",this);
     }
-
+public:
     //记录先祖的回调函数
     virtual lv_design_cb_t & ancestorDesignCB()
     { static lv_design_cb_t lv_design_cb = nullptr; return lv_design_cb; }
@@ -356,10 +357,11 @@ public:
     /**
      * Init. the 'lv' library.
      */
-    static void init(void)
-    {
-        lv_init();
-    }
+    //暴露这个函数不是个好主意
+    //static void init(void)
+    //{
+    //    lv_init();
+    //}
 
     /*--------------------
      * Create and delete
@@ -599,7 +601,7 @@ public:
      * @param obj pointer to an object
      * @param en true: enable auto realign; false: disable auto realign
      */
-    void setAutoRealign(bool en)
+    void setAutoRealign(bool en = true)
     {
         lv_obj_set_auto_realign(this, en);
     }
@@ -674,9 +676,10 @@ public:
      * @param obj pointer to an object
      * @param en true: hide the object
      */
-    void setHidden(bool en)
+    void setHidden(bool en = true)
     {
-        lv_obj_set_hidden(this, en);
+        if(getHidden() != en)
+            lv_obj_set_hidden(this, en);
     }
 
     /**
@@ -684,9 +687,10 @@ public:
      * @param obj pointer to an object
      * @param en true: make the object clickable
      */
-    void setClickEnable( bool en)
+    void setClickEnable( bool en = true)
     {
-        lv_obj_set_click(this, en);
+        if(getClickEnable() != en)
+            lv_obj_set_click(this, en);
     }
 
     /**
@@ -810,7 +814,7 @@ public:
      * @param data arbitrary data depending on the object type and the event. (Usually `NULL`)
      * @return LV_RES_OK: `obj` was not deleted in the event; LV_RES_INV: `obj` was deleted in the event
      */
-    LVResult eventSend(EventType event, const void * data)
+    LVResult eventSend(EventType event, const void * data = nullptr)
     {
         return (LVResult)lv_event_send(this, event, data);
     }
@@ -848,6 +852,7 @@ public:
         m_signalCallback = signal_cb;
         lv_obj_set_signal_cb(this,(lv_signal_cb_t)signalCallBackAgency);
     }
+
     //void setSignalCallBack(lv_signal_cb_t signal_cb)
     //{
     //    lv_obj_set_signal_cb(this,signal_cb);

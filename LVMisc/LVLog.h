@@ -106,11 +106,12 @@ public:
 
     static inline void addf(LogLevel level, const char * file, int line ,const char * format,...)
     {
-        char tempStr[256];
+        //BUG:长日志会造成数据溢出
         va_list args;
         va_start(args,format);
-        vsprintf(tempStr,format,args);
-        add(level,file,line,tempStr);
+        char buf[1+std::vsnprintf(nullptr, 0, format, args)];
+        vsprintf(buf,format,args);
+        add(level,file,line,buf);
     }
 
 #if LV_LOG_PRINTF == 0
